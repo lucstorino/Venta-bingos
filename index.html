@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TuBINGO.com</title>
+    <meta name="description" content="TuBINGO.com: Plataforma oficial de venta y sorteo digital de bingos." />
+    <meta property="og:title" content="TuBINGO.com" />
+    <meta property="og:description" content="TuBINGO.com: Plataforma oficial de venta y sorteo digital de bingos." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Gracefully prevent benign Vite HMR websocket disconnection noise in preview sandbox
+      window.addEventListener('unhandledrejection', function(event) {
+        const msg = event.reason?.message || (typeof event.reason === 'string' ? event.reason : '');
+        if (msg.includes('WebSocket') || msg.includes('[vite]')) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+.numero-carton {
+  position: absolute;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  color: #000;
+  font-weight: 700;
+  line-height: 1;
+}

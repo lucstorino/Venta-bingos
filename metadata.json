@@ -1,0 +1,6 @@
+{
+  "name": "TuBINGO.com",
+  "description": "TuBINGO.com: Plataforma oficial de venta y sorteo digital de bingos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
