@@ -17,8 +17,9 @@ export const TuBingoHero: React.FC<TuBingoHeroProps> = ({ onExploreBingos }) => 
           {/* Left Column: Headings, CTA & Value Badges */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="flex justify-center lg:justify-start">
-              <div className="bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-blue-100 shadow-xs inline-flex">
-                <TuBingoLogo className="h-9 sm:h-10" />
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-xs font-bold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Plataforma Oficial de Bingos Digitales</span>
               </div>
             </div>
 
@@ -85,24 +86,24 @@ export const TuBingoHero: React.FC<TuBingoHeroProps> = ({ onExploreBingos }) => 
             </div>
           </div>
 
-          {/* Right Column: 3D Mascot Character with "¡Mucha suerte! ♡" script */}
+          {/* Right Column: Logo Oficial TuBINGO.com con "¡Mucha suerte! ♡" */}
           <div className="lg:col-span-5 relative flex flex-col items-center justify-center">
             {/* Cute handwritten badge */}
-            <div className="absolute top-2 right-4 sm:right-12 z-20 transform rotate-6 select-none">
-              <span className="text-blue-600 font-serif italic text-2xl font-bold tracking-tight drop-shadow-xs">
+            <div className="absolute -top-3 sm:top-0 right-4 sm:right-10 z-20 transform rotate-6 select-none">
+              <span className="text-blue-600 font-serif italic text-2xl sm:text-3xl font-bold tracking-tight drop-shadow-xs">
                 ¡Mucha suerte! ♡
               </span>
             </div>
 
-            {/* Mascot Container */}
-            <div className="relative w-64 sm:w-80 md:w-96 aspect-square flex items-center justify-center">
+            {/* Logo Container */}
+            <div className="relative w-72 sm:w-88 md:w-[420px] max-w-full flex items-center justify-center p-4">
               {/* Soft decorative background circles */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-200/40 to-blue-400/20 rounded-full blur-2xl transform scale-90"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-200/35 via-sky-200/25 to-emerald-200/25 rounded-full blur-3xl transform scale-95 pointer-events-none"></div>
 
               <img
-                src="/src/assets/images/mascot_bingo_ball_1789819883070.jpg"
-                alt="Mascota oficial Tu Bingo - Bola 8 de la suerte"
-                className="relative z-10 w-full h-full object-contain drop-shadow-2xl rounded-full"
+                src="/logo_tubingo.png"
+                alt="TuBINGO.com - Plataforma Oficial"
+                className="relative z-10 w-full h-auto max-h-[220px] sm:max-h-[260px] object-contain drop-shadow-xl transition-transform duration-300 hover:scale-[1.03]"
                 referrerPolicy="no-referrer"
               />
             </div>

@@ -21,6 +21,7 @@ import {
   Trash2,
   Layers,
   Search,
+  Ban,
 } from 'lucide-react';
 import { BingoCard } from '../../types';
 import { BingoCard as BingoCardComponent } from '../sales/BingoCard';
@@ -312,6 +313,23 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
               Podés elegir por tu número favorito, seleccionar al azar o elegir múltiples cartones para tener más chances de ganar el pozo mayor.
             </p>
           </div>
+
+          {/* Banner si la venta está cerrada */}
+          {bingo.salesClosed && (
+            <div className="p-4 sm:p-5 bg-rose-50 border-2 border-rose-300 rounded-2xl flex items-center space-x-3 text-rose-900 shadow-xs">
+              <div className="p-2.5 rounded-xl bg-rose-200/80 text-rose-700 shrink-0">
+                <Ban className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-black uppercase tracking-wide text-rose-900">
+                  Venta Cerrada Oficialmente
+                </h4>
+                <p className="text-xs text-rose-700 leading-relaxed">
+                  La venta de cartones para este sorteo finalizó. Todos los cartones que no fueron vendidos fueron dados de baja oficialmente y no participan del sorteo.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* PORTADA OFICIAL DE PREMIOS & DETALLES */}
           <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-md bg-slate-900 group">
@@ -770,7 +788,7 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
       </div>
 
       {/* STICKY BOTTOM BAR WHEN CARDS ARE SELECTED */}
-      {selectedCards.length > 0 && (
+      {!bingo.salesClosed && selectedCards.length > 0 && (
         <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3.5 sm:p-4 shadow-2xl z-40">
           <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">

@@ -5,6 +5,7 @@ import { FeaturedBingoCard } from './FeaturedBingoCard';
 import { BingoCardItem } from './BingoCardItem';
 import { BingoPrizesModal } from './BingoPrizesModal';
 import { HowItWorksSection } from './HowItWorksSection';
+import { BroadcastChannelsSection } from './BroadcastChannelsSection';
 import { PastBingosSection } from './PastBingosSection';
 import { PaymentMethodsSection } from './PaymentMethodsSection';
 import { FaqSection } from './FaqSection';
@@ -48,19 +49,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectBingo, onOpenSupport
     }
 
     return bingos
-      .filter((b) => b.status === 'ACTIVE' || b.status === 'SCHEDULED' || !b.status)
+      .filter((b) => b.status === 'ACTIVE' || b.status === 'SCHEDULED' || b.salesClosed || !b.status)
       .map((b, idx) => {
         // Find main prize from prizes array for this bingo
         const bingoPrizes = prizes.filter((p) => p.bingoId === b.id);
         const topPrize = bingoPrizes.sort((x, y) => (y.amount || 0) - (x.amount || 0))[0];
 
         const defaultTag = idx === 0 ? 'BINGO OFICIAL' : idx === 1 ? 'EDICIÓN ESPECIAL' : 'GRAN SORTEO';
-        const formattedPrice = `$ ${b.price ? b.price.toLocaleString('es-AR') : '2.500'}`;
+        const formattedPrice = `$ ${b.price ? b.price.toLocaleString('es-AR') : '2.500'}`.replace(' ', '\u00A0');
+        const isClosed = Boolean(b.salesClosed || b.status === 'FINISHED');
 
         return {
           id: b.id,
           tag: b.ticketEditionTitle || defaultTag,
-          tagColor: 'bg-emerald-700',
+          tagColor: isClosed ? 'bg-rose-700' : 'bg-emerald-700',
           title: b.name || 'Gran Bingo Oficial',
           date: formatDrawDate(b.drawDate),
           time: b.drawTime ? `${b.drawTime} hs` : '17:00 hs',
@@ -68,8 +70,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectBingo, onOpenSupport
           price: b.price || 2500,
           formattedPrice: formattedPrice,
           image: b.imageUrl || '/3B50B378-AFBA-476D-A6F1-A37BCC81D27E.PNG',
+          prizesImage: b.prizesImageUrl || '/premios_oficiales_ejemplo.svg',
           slug: b.id,
-          badge: b.status === 'ACTIVE' ? 'En Venta' : 'Próximamente',
+          badge: isClosed ? 'Venta Cerrada' : b.status === 'ACTIVE' ? 'En Venta' : 'Próximamente',
+          salesClosed: isClosed,
+          status: b.status,
         };
       });
   }, [bingos, prizes]);
@@ -101,28 +106,31 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectBingo, onOpenSupport
       {/* 1. SECCIÓN PRINCIPAL: BINGOS DISPONIBLES (INMEDIATA, SIN HEADER PUBLICITARIO GENÉRICO) */}
       <section id="seccion-bingos" className="pt-6 pb-12 sm:pt-8 sm:pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Top Direct Brand Bar with Mascot 8 */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8 pb-4 border-b border-slate-200/80">
-          <div className="flex items-center space-x-3">
-            <img
-              src="/D3D6D92C-3883-4894-A39F-3EC814A809D4.PNG"
-              alt="TuBINGO Bolilla 8"
-              className="w-10 h-10 object-contain shrink-0"
-              referrerPolicy="no-referrer"
-            />
-            <div>
+        {/* Encabezado de Bingos Disponibles simplificado con fondo blanco y contenido perfectamente centralizado */}
+        <div className=" p-4 sm:p-5 mb-6 sm:mb-8 transition-all">
+          <div className="flex flex-col items-center justify-center text-center space-y-2">
+            
+            {/* Título centralizado con punto pulsante */}
+            <div className="flex items-center justify-center space-x-2">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
                 Bingos Disponibles
               </h1>
-              <p className="text-xs text-slate-500 font-medium mt-1">
-                Elegí tu sorteo favorito, comprá tu cartón oficial y participá en vivo.
-              </p>
             </div>
-          </div>
 
-          <div className="hidden sm:flex items-center space-x-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Transmisión Oficial y Escribanía Matriculada</span>
+            {/* Bajada / Subtítulo */}
+            <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-md">
+              Elegí tu sorteo favorito y comprá tu cartón oficial
+            </p>
+
+            {/* Insignia Página Oficial Autorizada centralizada */}
+            <div className="pt-0.5 flex items-center justify-center">
+              <div className="flex items-center space-x-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3.5 py-1.5 rounded-full shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Página Oficial Autorizada</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -179,13 +187,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectBingo, onOpenSupport
             </div>
             <div>
               <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-amber-300 text-[11px] font-black uppercase tracking-wider">
-                Pozo Acumulado y Vehículos 0km
+                Premios Oficiales en Juego
               </span>
               <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
-                Premios certificados libres de gastos
+                Premios libres de gastos
               </h3>
               <p className="text-xs sm:text-sm text-emerald-100 mt-0.5">
-                Los vehículos se entregan patentados y el dinero en efectivo se acredita directamente por transferencia.
+                Todos los premios se entregan en regla según el reglamento oficial de cada sorteo.
               </p>
             </div>
           </div>
@@ -202,7 +210,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onSelectBingo, onOpenSupport
         </div>
       </section>
 
-      {/* 4. SORTEOS ANTERIORES */}
+      {/* 4. MEDIOS DE TRANSMISIÓN OFICIALES (Televisado y Transmitido por Radio) */}
+      <BroadcastChannelsSection />
+
+      {/* 5. SORTEOS ANTERIORES */}
       <PastBingosSection />
 
       {/* 5. MEDIOS DE PAGO */}

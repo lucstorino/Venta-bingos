@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Lectura pública de los sorteos y sus imágenes permanentes
+    match /bingos/{bingoId} {
+      allow read: if true;
+      allow write: if true; // En el entorno de administración de AI Studio
+    }
+
+    match /bingos/{bingoId}/cartones/{cartonId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+  }
+}

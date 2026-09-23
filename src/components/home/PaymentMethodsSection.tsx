@@ -1,11 +1,11 @@
 import React from 'react';
-import { CreditCard, Wallet, Landmark, ShieldCheck, Lock, CheckCircle2, Zap } from 'lucide-react';
+import { CreditCard, Wallet, Lock, CheckCircle2, Zap } from 'lucide-react';
 
 export const PaymentMethodsSection: React.FC = () => {
   const methods = [
     {
       title: 'Mercado Pago',
-      subtitle: 'Dinero en cuenta y procesador seguro',
+      subtitle: 'Dinero en cuenta y procesador oficial',
       description: 'Pagá directo con tu saldo de Mercado Pago con acreditación instantánea.',
       icon: Wallet,
       tag: 'Acreditación Instantánea',
@@ -27,14 +27,6 @@ export const PaymentMethodsSection: React.FC = () => {
       tag: 'Cuotas disponibles',
       tagColor: 'bg-amber-100 text-amber-800 border-amber-200',
     },
-    {
-      title: 'Transferencia Bancaria / CVU',
-      subtitle: 'CBU / CVU / Alias oficial directo',
-      description: 'Transferí desde cualquier banco o billetera virtual con confirmación automática.',
-      icon: Landmark,
-      tag: 'Billeteras y Bancos',
-      tagColor: 'bg-purple-100 text-purple-800 border-purple-200',
-    },
   ];
 
   return (
@@ -51,12 +43,12 @@ export const PaymentMethodsSection: React.FC = () => {
             Medios de pago disponibles
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Operamos con pasarelas certificadas y los métodos de cobro más confiables de Argentina.
+            Operamos con las plataformas oficiales y los métodos de cobro más confiables de Argentina.
           </p>
         </div>
 
-        {/* Payment Methods Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {/* Payment Methods Cards - 3 columns for balanced display */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {methods.map((method) => {
             const Icon = method.icon;
             return (
@@ -97,12 +89,8 @@ export const PaymentMethodsSection: React.FC = () => {
           })}
         </div>
 
-        {/* Trust Badges Banner */}
+        {/* Trust Badges Banner without SSL 256 bits text */}
         <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-around gap-4 text-xs font-semibold text-emerald-950">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Encriptación SSL 256 bits</span>
-          </div>
           <div className="flex items-center space-x-2">
             <Zap className="w-4 h-4 text-amber-600 shrink-0" />
             <span>Generación inmediata de cartón oficial</span>

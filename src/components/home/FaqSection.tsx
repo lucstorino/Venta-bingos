@@ -14,13 +14,13 @@ export const INITIAL_FAQS: FaqItem[] = [
     id: 'faq-1',
     question: '¿Cómo recibo mi cartón después de realizar el pago?',
     answer:
-      'Una vez confirmado el pago, tu cartón oficial se genera de inmediato en pantalla. Podés visualizar los números asignados, descargarlo en formato PDF de alta resolución con su código QR y número de serie oficial, y recibir una copia directa a tu WhatsApp o correo electrónico.',
+      'Una vez confirmado el pago, tu cartón oficial se genera de inmediato en pantalla. Podés visualizar los números asignados, descargarlo en formato PDF de alta resolución con su número de serie oficial, y recibir una copia directa a tu WhatsApp o correo electrónico.',
   },
   {
     id: 'faq-2',
     question: '¿Es seguro comprar cartones en TuBINGO.com?',
     answer:
-      'Totalmente seguro. Todos los pagos se procesan a través de la infraestructura certificada de Mercado Pago con cifrado SSL de nivel bancario. Cada cartón cuenta con numeración única autorizada y supervisada por autoridades oficiales de juego.',
+      'Totalmente seguro. Todos los pagos se procesan a través de la infraestructura oficial de Mercado Pago. Cada cartón cuenta con numeración única autorizada y supervisada por autoridades oficiales de juego.',
   },
   {
     id: 'faq-3',
@@ -38,7 +38,7 @@ export const INITIAL_FAQS: FaqItem[] = [
     id: 'faq-5',
     question: '¿Cómo y cuándo cobro mi premio si gano?',
     answer:
-      'Los premios en efectivo se acreditan directamente por transferencia bancaria (CBU/CVU) previa validación de identidad. En el caso de vehículos 0KM y premios mayores, la organización oficial del bingo se contacta directamente con vos para coordinar la entrega y firma de documentación ante escribano público.',
+      'Los premios en efectivo se coordinan y abonan de forma directa previa validación de identidad. La organización oficial del bingo se contacta directamente con vos para coordinar la entrega y firma de la documentación correspondiente.',
   },
   {
     id: 'faq-6',

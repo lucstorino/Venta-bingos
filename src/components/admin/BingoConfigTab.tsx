@@ -14,11 +14,18 @@ import {
   ArrowRight,
   Eye,
   X,
+  Ban,
+  FileSpreadsheet,
+  AlertTriangle,
 } from 'lucide-react';
 import { useBingo } from '../../context/BingoContext';
 import { Bingo, BingoStatus } from '../../types';
 import { BingoCoverUploader } from './BingoCoverUploader';
 import { OfficialTicketTemplateUploader } from './OfficialTicketTemplateUploader';
+import { BingoPrizesImageUploader } from './BingoPrizesImageUploader';
+import { BingoExtractImageUploader } from './BingoExtractImageUploader';
+import { BingoImageUploader } from './BingoImageUploader';
+import { StopSalesModal } from './StopSalesModal';
 
 const createDefaultBingoData = (index: number): Bingo => {
   const futureDate = new Date();
@@ -63,6 +70,7 @@ export const BingoConfigTab: React.FC = () => {
   const [selectedBingoId, setSelectedBingoId] = useState<string>(activeBingoId || (bingos[0] ? bingos[0].id : ''));
   const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<string | null>(null);
+  const [stopSalesBingo, setStopSalesBingo] = useState<Bingo | null>(null);
 
   // Active form data
   const currentBingo = bingos.find((b) => b.id === selectedBingoId) || bingos[0];
@@ -199,9 +207,15 @@ export const BingoConfigTab: React.FC = () => {
                         <Check className="w-3 h-3" /> Principal en Portada
                       </span>
                     )}
-                    <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-medium">
-                      {b.status || 'ACTIVE'}
-                    </span>
+                    {b.salesClosed || b.status === 'FINISHED' ? (
+                      <span className="px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold flex items-center gap-1">
+                        <Ban className="w-3 h-3" /> Venta Cerrada
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-medium">
+                        Venta Abierta
+                      </span>
+                    )}
                   </div>
 
                   {bingos.length > 1 && (
@@ -249,33 +263,76 @@ export const BingoConfigTab: React.FC = () => {
                 </div>
 
                 {/* Card Actions */}
-                <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectToEdit(b.id)}
-                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors text-center ${
-                      isCurrentEditing
-                        ? 'bg-amber-400 text-slate-950 font-bold'
-                        : 'bg-slate-800 hover:bg-slate-700 text-white'
-                    }`}
-                  >
-                    {isCurrentEditing ? 'Editando Ahora' : 'Editar Datos'}
-                  </button>
+                <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectToEdit(b.id)}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors text-center cursor-pointer ${
+                        isCurrentEditing
+                          ? 'bg-amber-400 text-slate-950 font-bold'
+                          : 'bg-slate-800 hover:bg-slate-700 text-white'
+                      }`}
+                    >
+                      {isCurrentEditing ? 'Editando Ahora' : 'Editar Datos'}
+                    </button>
 
-                  {!isCurrentActive && (
+                    {!isCurrentActive && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveBingoId(b.id);
+                          setSavedSuccess(`"${b.name}" establecido como Bingo Principal`);
+                          setTimeout(() => setSavedSuccess(null), 3000);
+                        }}
+                        title="Establecer como bingo principal"
+                        className="py-1.5 px-2.5 rounded-lg text-[11px] font-medium bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition-colors cursor-pointer"
+                      >
+                        Hacer Principal
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Acciones de Detener Venta y Extracto */}
+                  <div className="flex items-center gap-1.5">
+                    {b.salesClosed || b.status === 'FINISHED' ? (
+                      <button
+                        type="button"
+                        onClick={() => setStopSalesBingo(b)}
+                        className="flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-800 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                        title="Ver cartones no vendidos y descargar acta"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Ver No Vendidos (Baja)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setStopSalesBingo(b)}
+                        className="flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold bg-rose-600/25 hover:bg-rose-600 hover:text-white text-rose-300 border border-rose-500/50 flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                        title="Detener la venta y dar de baja cartones no vendidos"
+                      >
+                        <Ban className="w-3.5 h-3.5" />
+                        <span>Detener Venta</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveBingoId(b.id);
-                        setSavedSuccess(`"${b.name}" establecido como Bingo Principal`);
-                        setTimeout(() => setSavedSuccess(null), 3000);
+                        handleSelectToEdit(b.id);
+                        setTimeout(() => {
+                          const el = document.getElementById('seccion-extracto-bingo');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
-                      title="Establecer como bingo principal"
-                      className="py-1.5 px-2.5 rounded-lg text-[11px] font-medium bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition-colors"
+                      title="Cargar o actualizar extracto oficial"
+                      className="py-1.5 px-2.5 rounded-lg text-[11px] font-semibold bg-emerald-950/50 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
                     >
-                      Hacer Principal
+                      <FileText className="w-3 h-3 text-emerald-400" />
+                      <span>Extracto</span>
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             );
@@ -320,8 +377,18 @@ export const BingoConfigTab: React.FC = () => {
         {/* Foto de Portada del Bingo (Upload / Change) */}
         <div className="pb-6 border-b border-slate-800">
           <BingoCoverUploader
+            bingoId={formData.id}
             currentImageUrl={formData.imageUrl}
             onImageChange={(imageUrl) => setFormData({ ...formData, imageUrl })}
+          />
+        </div>
+
+        {/* Gráfica Oficial de Premios Detallados (Upload / Change) */}
+        <div className="pb-6 border-b border-slate-800">
+          <BingoPrizesImageUploader
+            bingoId={formData.id}
+            currentImageUrl={formData.prizesImageUrl}
+            onImageChange={(prizesImageUrl) => setFormData({ ...formData, prizesImageUrl })}
           />
         </div>
 
@@ -333,6 +400,99 @@ export const BingoConfigTab: React.FC = () => {
             bingo={formData}
           />
         </div>
+
+        {/* Banner Promocional Secundario (5to Tipo de Imagen del Bingo) */}
+        <div className="pb-6 border-b border-slate-800">
+          <BingoImageUploader
+            bingoId={formData.id}
+            imageType="banner"
+            title="5. Banner o Imagen Promocional Secundaria"
+            description="Imagen publicitaria para campañas, redes y banners secundarios de este bingo."
+            currentImageUrl={formData.bannerImageUrl}
+            onImageChange={(url) => setFormData({ ...formData, bannerImageUrl: url })}
+            aspectRatioLabel="21:9 o 16:9"
+            recommendedSize="Recomendado: 1920x600 o 1200x630 (JPG, PNG o WebP)"
+          />
+        </div>
+
+        {/* Control de Cierre de Venta y Cartones No Vendidos */}
+        {!isCreatingNew && (
+          <div className="p-5 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    formData.salesClosed || formData.status === 'FINISHED'
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  }`}
+                >
+                  {formData.salesClosed || formData.status === 'FINISHED' ? (
+                    <Ban className="w-5 h-5" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-white">
+                      Estado de Venta de Cartones
+                    </h4>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        formData.salesClosed || formData.status === 'FINISHED'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      }`}
+                    >
+                      {formData.salesClosed || formData.status === 'FINISHED'
+                        ? 'Venta Cerrada • Cartones No Vendidos Dados de Baja'
+                        : 'Venta Abierta al Público'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {formData.salesClosed || formData.status === 'FINISHED'
+                      ? 'Este sorteo ya cerró la venta. Podés consultar el listado de números no vendidos y el acta oficial de cierre.'
+                      : 'Al llegar el día y hora del bingo, podés detener la venta para que los cartones no vendidos queden dados de baja oficialmente.'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStopSalesBingo(formData)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md ${
+                  formData.salesClosed || formData.status === 'FINISHED'
+                    ? 'bg-rose-950/70 hover:bg-rose-900 text-rose-200 border border-rose-800'
+                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/50'
+                }`}
+              >
+                {formData.salesClosed || formData.status === 'FINISHED' ? (
+                  <>
+                    <FileSpreadsheet className="w-4 h-4 text-rose-400" />
+                    <span>Ver Cartones No Vendidos (Acta)</span>
+                  </>
+                ) : (
+                  <>
+                    <Ban className="w-4 h-4" />
+                    <span>Detener Venta y Dar de Baja No Vendidos</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Extracto Oficial del Sorteo (Para Bingos Finalizados / Pasados) */}
+        {!isCreatingNew && (
+          <div id="seccion-extracto-bingo" className="pb-6 border-b border-slate-800">
+            <BingoExtractImageUploader
+              bingo={formData}
+              currentImageUrl={formData.extractoImageUrl}
+              onImageChange={(url) => setFormData({ ...formData, extractoImageUrl: url })}
+            />
+          </div>
+        )}
 
         {/* Main Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -625,6 +785,23 @@ export const BingoConfigTab: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Modal de Cierre de Ventas y Cartones Dados de Baja */}
+      {stopSalesBingo && (
+        <StopSalesModal
+          isOpen={true}
+          bingo={stopSalesBingo}
+          onClose={() => setStopSalesBingo(null)}
+          onUploadExtract={(b) => {
+            setStopSalesBingo(null);
+            handleSelectToEdit(b.id);
+            setTimeout(() => {
+              const el = document.getElementById('seccion-extracto-bingo');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 150);
+          }}
+        />
+      )}
     </div>
   );
 };

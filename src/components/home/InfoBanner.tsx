@@ -39,7 +39,7 @@ export const InfoBanner: React.FC<InfoBannerProps> = ({ onPlayNow }) => {
               Grandes premios
             </span>
             <span className="text-xs text-slate-500">
-              Autos 0km, pozos millonarios y viajes
+              Grandes premios en efectivo y más
             </span>
           </div>
 
@@ -63,7 +63,7 @@ export const InfoBanner: React.FC<InfoBannerProps> = ({ onPlayNow }) => {
               Seguro y confiable
             </span>
             <span className="text-xs text-slate-500">
-              Fiscalizado por Escribano Público
+              Fiscalización Oficial Certificada
             </span>
           </div>
         </div>

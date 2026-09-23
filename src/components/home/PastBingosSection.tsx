@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
-import { Trophy, Calendar, CheckCircle, FileText, X, ShieldCheck, MapPin, Award } from 'lucide-react';
-import { PAST_BINGOS, PastBingoItem } from '../../data/pastBingos';
+import React, { useState, useEffect } from 'react';
+import { Calendar, CheckCircle, FileText, X, ExternalLink } from 'lucide-react';
+import { PAST_BINGOS, PastBingoItem, getStoredPastBingos } from '../../data/pastBingos';
 
 interface PastBingosSectionProps {
   finishedBingos?: PastBingoItem[];
 }
 
 export const PastBingosSection: React.FC<PastBingosSectionProps> = ({
-  finishedBingos = PAST_BINGOS,
+  finishedBingos,
 }) => {
+  const [bingosList, setBingosList] = useState<PastBingoItem[]>(() => {
+    return finishedBingos || getStoredPastBingos();
+  });
   const [selectedPastBingo, setSelectedPastBingo] = useState<PastBingoItem | null>(null);
+
+  useEffect(() => {
+    if (finishedBingos) {
+      setBingosList(finishedBingos);
+      return;
+    }
+    const handleUpdate = () => {
+      setBingosList(getStoredPastBingos());
+    };
+    window.addEventListener('tubingo_past_bingos_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('tubingo_past_bingos_updated', handleUpdate);
+    };
+  }, [finishedBingos]);
 
   return (
     <section id="seccion-sorteos-anteriores" className="py-12 sm:py-16 bg-slate-50/80 border-t border-slate-200/80">
@@ -26,18 +43,14 @@ export const PastBingosSection: React.FC<PastBingosSectionProps> = ({
               Sorteos anteriores
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Resultados y ganadores oficiales de nuestras ediciones finalizadas.
+              Resultados y extractos oficiales de nuestras ediciones finalizadas.
             </p>
-          </div>
-
-          <div className="text-xs text-slate-500 font-medium">
-            Todos los sorteos son fiscalizados ante escribano público.
           </div>
         </div>
 
         {/* Finished Bingos Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {finishedBingos.map((item) => (
+          {bingosList.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between"
@@ -60,7 +73,7 @@ export const PastBingosSection: React.FC<PastBingosSectionProps> = ({
                 </div>
 
                 {/* Content */}
-                <div className="p-4 sm:p-5 space-y-3">
+                <div className="p-4 sm:p-5 space-y-2">
                   <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     <span>Sorteado el {item.drawDate}</span>
@@ -69,33 +82,18 @@ export const PastBingosSection: React.FC<PastBingosSectionProps> = ({
                   <h3 className="text-base font-black text-slate-900 leading-snug">
                     {item.name}
                   </h3>
-
-                  <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-2.5 space-y-1">
-                    <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide flex items-center gap-1">
-                      <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Premio Mayor Entregado</span>
-                    </div>
-                    <div className="text-xs font-black text-slate-900">
-                      {item.mainPrize}
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-slate-600 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{item.winnerInfo} • Cartón Nº <strong className="text-slate-900">#{item.winningTicket}</strong></span>
-                  </div>
                 </div>
               </div>
 
               {/* Bottom action to view official extract */}
-              <div className="p-4 sm:p-5 pt-0">
+              <div className="p-4 sm:p-5 pt-2">
                 <button
                   type="button"
                   onClick={() => setSelectedPastBingo(item)}
-                  className="w-full py-2.5 px-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                  className="w-full py-2.5 px-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-700 hover:text-emerald-800 text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer shadow-2xs"
                 >
-                  <FileText className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Ver extracto y acta oficial</span>
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>Ver extracto</span>
                 </button>
               </div>
             </div>
@@ -104,66 +102,73 @@ export const PastBingosSection: React.FC<PastBingosSectionProps> = ({
 
       </div>
 
-      {/* Official Extract Modal */}
+      {/* Official Extract Image Modal */}
       {selectedPastBingo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setSelectedPastBingo(null)}
+        >
           <div
-            className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative"
+            className="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 relative max-h-[92vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setSelectedPastBingo(null)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div>
+                <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700 mb-1">
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>Extracto Oficial</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
+                  {selectedPastBingo.name}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Sorteo del {selectedPastBingo.drawDate} {selectedPastBingo.drawTime ? `• ${selectedPastBingo.drawTime}` : ''}
+                </p>
+              </div>
 
-            <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700 mb-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Acta de Sorteo y Extracto Oficial</span>
+              <button
+                type="button"
+                onClick={() => setSelectedPastBingo(null)}
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <h3 className="text-xl font-black text-slate-900 mb-1">
-              {selectedPastBingo.name}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Realizado el {selectedPastBingo.drawDate} a las {selectedPastBingo.drawTime}
-            </p>
-
-            <div className="space-y-3 bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs text-slate-700 mb-4">
-              <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="font-semibold text-slate-500">Resolución Oficial:</span>
-                <span className="font-bold text-slate-900">{selectedPastBingo.officialResolution}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="font-semibold text-slate-500">Cartón Ganador del Premio Mayor:</span>
-                <span className="font-black font-mono text-emerald-700 text-sm">#{selectedPastBingo.winningTicket}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="font-semibold text-slate-500">Adjudicación:</span>
-                <span className="font-bold text-slate-900">{selectedPastBingo.winnerInfo}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="font-semibold text-slate-500">Premio Entregado:</span>
-                <span className="font-bold text-slate-900">{selectedPastBingo.mainPrize}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="font-semibold text-slate-500">Pozo Total Distribuido:</span>
-                <span className="font-bold text-slate-900">{selectedPastBingo.totalPrizes}</span>
+            {/* Image Container */}
+            <div className="py-4 overflow-y-auto flex-1 flex flex-col items-center justify-center">
+              <div className="w-full bg-slate-50 rounded-2xl border border-slate-200/80 p-2 sm:p-4 flex items-center justify-center overflow-hidden shadow-inner">
+                <img
+                  src={selectedPastBingo.extractoImage || '/extracto_oficial_ejemplo.svg'}
+                  alt={`Extracto oficial de ${selectedPastBingo.name}`}
+                  className="max-h-[62vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
+                  referrerPolicy="no-referrer"
+                />
               </div>
             </div>
 
-            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 flex items-center space-x-2">
-              <Award className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Premio abonado e inscripto conforme a las normativas vigentes.</span>
-            </div>
+            {/* Footer with Actions */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              <a
+                href={selectedPastBingo.extractoImage || '/extracto_oficial_ejemplo.svg'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 py-2 px-3 rounded-xl hover:bg-emerald-50 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Ver imagen en pantalla completa</span>
+              </a>
 
-            <button
-              onClick={() => setSelectedPastBingo(null)}
-              className="mt-5 w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Cerrar Extracto
-            </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPastBingo(null)}
+                className="py-2.5 px-5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

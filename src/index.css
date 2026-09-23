@@ -16,3 +16,12 @@
   font-weight: 700;
   line-height: 1;
 }
+
+.logo-tubingo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+

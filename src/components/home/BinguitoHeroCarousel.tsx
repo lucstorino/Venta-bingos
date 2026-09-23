@@ -70,10 +70,10 @@ export const BinguitoHeroCarousel: React.FC<BinguitoHeroCarouselProps> = ({ onBu
       date: formatDrawDate(bingo.drawDate),
       time: bingo.drawTime ? `${bingo.drawTime} hs` : '15:00 hs',
       price: bingo.price || 2500,
-      formattedPrice: `$ ${(bingo.price || 2500).toLocaleString('es-AR')}`,
+      formattedPrice: `$ ${(bingo.price || 2500).toLocaleString('es-AR')}`.replace(' ', '\u00A0'),
       image: bingo.imageUrl || '/src/assets/images/bingo_casa_card_1789819899795.jpg',
       slug: 'bingo-oficial',
-      badge: 'Sorteo Oficial Autorizado',
+      badge: 'Página Oficial Autorizada',
       mainPrize: topPrize,
     };
 
@@ -253,11 +253,11 @@ export const BinguitoHeroCarousel: React.FC<BinguitoHeroCarouselProps> = ({ onBu
             </div>
 
             {/* Precio del cartón */}
-            <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4">
-              <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
+            <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
                 Precio del cartón
               </span>
-              <span className="text-3xl sm:text-4xl font-black text-emerald-700 font-mono tracking-tight">
+              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-emerald-700 font-mono tracking-tight whitespace-nowrap shrink-0">
                 {currentBingo.formattedPrice}
               </span>
             </div>

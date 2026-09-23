@@ -1,0 +1,20 @@
+{
+  "entities": {
+    "bingos": {
+      "title": "Bingos Oficiales",
+      "description": "Entidad principal de sorteos con sus 5 imágenes de Firebase Storage y parámetros de juego",
+      "properties": {
+        "id": { "type": "string", "description": "Código o ID del bingo" },
+        "name": { "type": "string", "description": "Nombre oficial del bingo" },
+        "imageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Foto de portada)" },
+        "prizesImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Gráfica de premios)" },
+        "ticketTemplateImage": { "type": "string", "description": "URL permanente en Firebase Storage (Plantilla del cartón)" },
+        "extractoImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Extracto oficial)" },
+        "bannerImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Banner promocional)" },
+        "imagesMetadata": { "type": "object", "description": "Metadatos detallados de Storage por tipo" },
+        "updatedAt": { "type": "string", "description": "Fecha ISO de última actualización" }
+      },
+      "required": ["id"]
+    }
+  }
+}

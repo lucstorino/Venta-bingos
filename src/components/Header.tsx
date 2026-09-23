@@ -1,5 +1,6 @@
 import React from 'react';
-import { Ticket, Settings, ShoppingBag, Clock, FileText, CheckCircle2, ShieldCheck, Database } from 'lucide-react';
+import { Settings, ShoppingBag, Clock, FileText, Database } from 'lucide-react';
+import { TuBingoLogo } from './common/TuBingoLogo';
 import { useBingo } from '../context/BingoContext';
 
 interface HeaderProps {
@@ -29,32 +30,25 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Brand Logo & Title */}
+          {/* Brand Logo & Title: TuBINGO.com Identity */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectView('sales')}>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20 transform hover:rotate-3 transition-transform">
-              <Ticket className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  BINGO<span className="text-amber-400">VIRTUAL</span>
-                </span>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  En Vivo
-                </span>
-                <button
-                  onClick={() => onSelectView('admin')}
-                  className="hidden md:inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-slate-800/80 hover:bg-slate-750 text-indigo-300 border border-slate-700 transition-colors"
-                  title="Backend Express y Base de Datos SQLite Conectados. Haz clic para abrir el administrador de BD."
-                >
-                  <Database className="w-3 h-3 text-indigo-400" />
-                  <span>SQLite & Backend</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                </button>
-              </div>
-              <p className="text-xs text-slate-400 hidden md:block">
-                Digitalización oficial de cartones físicos • Pagos con Mercado Pago
-              </p>
+            <TuBingoLogo variant="dark" />
+            <div className="hidden lg:flex items-center space-x-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                En Vivo
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectView('admin');
+                }}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-slate-800/80 hover:bg-slate-750 text-indigo-300 border border-slate-700 transition-colors"
+                title="Backend Express y Base de Datos SQLite Conectados. Haz clic para abrir el administrador de BD."
+              >
+                <Database className="w-3 h-3 text-indigo-400" />
+                <span>SQLite & Backend</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              </button>
             </div>
           </div>
 

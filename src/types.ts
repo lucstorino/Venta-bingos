@@ -20,6 +20,7 @@ export interface Bingo {
   organizer?: string;
   termsAndConditions?: string;
   imageUrl?: string;
+  prizesImageUrl?: string;
   supportWhatsapp?: string;
   supportHours?: string;
   // Official physical/digital ticket template customization per bingo
@@ -30,6 +31,11 @@ export interface Bingo {
   ticketResolutionText?: string;
   ticketOrganizerTitle?: string;
   ticketOrganizerContact?: string;
+  salesClosed?: boolean;
+  salesClosedAt?: number;
+  extractoImageUrl?: string;
+  bannerImageUrl?: string;
+  imagesMetadata?: Record<string, any>;
 }
 
 export interface CompradorData {

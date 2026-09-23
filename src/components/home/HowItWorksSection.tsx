@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Dices, Smartphone, Trophy, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Compass, Dices, Smartphone, Trophy } from 'lucide-react';
 
 export const HowItWorksSection: React.FC = () => {
   const steps = [
@@ -25,7 +25,7 @@ export const HowItWorksSection: React.FC = () => {
       number: '3',
       title: 'Recibí tu cartón digital',
       description:
-        'Obtené al instante tu cartón oficial numerado con código QR y certificación notarial. Descargalo en PDF o recibilo en WhatsApp.',
+        'Obtené al instante tu cartón oficial numerado con código QR y número de serie único. Descargalo en PDF o recibilo en WhatsApp.',
       icon: Smartphone,
       badgeColor: 'bg-emerald-600 text-white',
       cardBorder: 'border-emerald-200/80',
@@ -47,11 +47,11 @@ export const HowItWorksSection: React.FC = () => {
         
         {/* Section Header with Mascot Touch */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold mb-3">
+          <div className="inline-flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold mb-3 shadow-xs">
             <img
-              src="/D3D6D92C-3883-4894-A39F-3EC814A809D4.PNG"
-              alt="Mascota TuBINGO"
-              className="w-4 h-4 object-contain shrink-0"
+              src="/logo_tubingo.png"
+              alt="TuBINGO.com"
+              className="h-5 w-auto object-contain shrink-0"
               referrerPolicy="no-referrer"
             />
             <span>Simple, Transparente y 100% Oficial</span>
@@ -62,7 +62,7 @@ export const HowItWorksSection: React.FC = () => {
           </h2>
 
           <p className="text-sm sm:text-base text-slate-500 mt-2 font-normal">
-            Comprar tu cartón oficial y participar de los grandes pozos en efectivo y vehículos 0KM es muy fácil en solo 4 pasos:
+            Comprar tu cartón oficial y participar de los sorteos es muy fácil en solo 4 pasos:
           </p>
         </div>
 
@@ -95,11 +95,6 @@ export const HowItWorksSection: React.FC = () => {
                   <p className="text-xs text-slate-600 leading-relaxed font-normal">
                     {step.description}
                   </p>
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-slate-200/60 flex items-center text-[11px] font-bold text-emerald-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                  <span>Garantía Oficial</span>
                 </div>
               </div>
             );

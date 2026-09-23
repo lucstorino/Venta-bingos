@@ -84,10 +84,7 @@ export const PrizesModal: React.FC<PrizesModalProps> = ({ isOpen, onClose }) => 
             ))}
         </div>
 
-        <div className="p-4 bg-slate-850 border-t border-slate-800 flex items-center justify-between">
-          <span className="text-xs text-slate-400">
-            Los premios se sortearán ante escribano público en la fecha programada.
-          </span>
+        <div className="p-4 bg-slate-850 border-t border-slate-800 flex items-center justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400"

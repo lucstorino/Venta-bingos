@@ -8,22 +8,17 @@ interface TuBingoLogoProps {
 
 export const TuBingoLogo: React.FC<TuBingoLogoProps> = ({
   className = '',
+  variant = 'light',
 }) => {
   return (
-    <div className={`flex items-center space-x-2 sm:space-x-3 select-none ${className}`}>
-      {/* Mascota Oficial */}
+    <div className={`brand inline-flex items-center select-none ${className}`}>
+      {/* Logo Oficial de TuBINGO.com (Nombre de la página) */}
       <img
-        src="/D3D6D92C-3883-4894-A39F-3EC814A809D4.PNG"
-        alt="Mascota TuBINGO"
-        className="h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 object-contain shrink-0"
-        referrerPolicy="no-referrer"
-      />
-
-      {/* Logotipo Oficial TuBINGO.com exacto sin alteraciones */}
-      <img
-        src="/3B50B378-AFBA-476D-A6F1-A37BCC81D27E.PNG"
+        src="/logo_tubingo.png"
         alt="TuBINGO.com"
-        className="h-8 sm:h-9 md:h-10 w-auto object-contain shrink-0"
+        className={`brand-logo h-8 sm:h-9 md:h-10 w-auto max-w-full object-contain shrink-0 transition-transform duration-200 hover:scale-[1.03] ${
+          variant === 'dark' ? 'drop-shadow-[0_2px_10px_rgba(255,255,255,0.14)] brightness-105' : 'drop-shadow-xs'
+        }`}
         referrerPolicy="no-referrer"
       />
     </div>

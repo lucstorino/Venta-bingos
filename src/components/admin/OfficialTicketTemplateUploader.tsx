@@ -1,7 +1,19 @@
 import React, { useRef, useState } from 'react';
-import { Upload, Camera, Trash2, CheckCircle2, AlertCircle, ShieldCheck, FileCheck } from 'lucide-react';
+import {
+  Upload,
+  Image as ImageIcon,
+  CheckCircle2,
+  AlertCircle,
+  FileCheck,
+  Eye,
+  Trash2,
+  Loader2,
+  CloudCheck,
+  ExternalLink,
+} from 'lucide-react';
 import { OfficialBingoTicket } from '../sales/OfficialBingoTicket';
 import { Bingo, BingoCard } from '../../types';
+import { uploadBingoImage, deleteBingoImage } from '../../services/firebaseBingoStorageService';
 
 interface OfficialTicketTemplateUploaderProps {
   currentTemplateUrl?: string;
@@ -27,6 +39,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleFileSelect = async (file: File) => {
     setErrorNotice(null);
@@ -37,160 +50,241 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
       return;
     }
 
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorNotice('La imagen supera los 15MB permitidos.');
+      return;
+    }
+
     setIsUploading(true);
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      if (!base64) {
-        setErrorNotice('No se pudo procesar la imagen.');
-        setIsUploading(false);
-        return;
-      }
+    try {
+      // 1. Subir físicamente a Firebase Storage en: bingos/{bingo.id}/template.ext
+      const { url } = await uploadBingoImage(bingo.id || 'bingo-oficial-2026', 'template', file);
 
-      try {
-        // 1. Save locally in localStorage
-        localStorage.setItem('official_bingo_ticket_template', base64);
-        
-        // 2. Persist to backend server so it is shared across all buyers and PDF exports
-        await fetch('/api/bingo/template', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64 }),
-        });
-
-        onTemplateChange(base64);
-        setSuccessNotice('¡Plantilla oficial cargada exitosamente! Ahora todos los cartones y envíos PDF usan esta imagen oficial con los números dinámicos.');
-        setTimeout(() => setSuccessNotice(null), 5000);
-      } catch (err) {
-        console.error('Error saving template:', err);
-        onTemplateChange(base64);
-      } finally {
-        setIsUploading(false);
-      }
-    };
-    reader.onerror = () => {
-      setErrorNotice('Error al leer el archivo.');
+      // 2. Notificar cambio con la URL permanente
+      onTemplateChange(url);
+      setSuccessNotice('¡Plantilla guardada permanentemente en Firebase Storage!');
+      setTimeout(() => setSuccessNotice(null), 4000);
+    } catch (err: any) {
+      console.error('Error subiendo plantilla a Firebase Storage:', err);
+      setErrorNotice(err.message || 'Error al guardar en Firebase Storage.');
+    } finally {
       setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
     }
   };
 
-  const handleRemoveTemplate = () => {
-    localStorage.removeItem('official_bingo_ticket_template');
-    onTemplateChange('');
-    setSuccessNotice('Se restableció la plantilla oficial vectorizada de alta fidelidad.');
-    setTimeout(() => setSuccessNotice(null), 4000);
+  const handleRemove = async () => {
+    if (!confirm('¿Deseas quitar la plantilla oficial de este bingo?')) return;
+    setIsUploading(true);
+    try {
+      if (bingo.id) {
+        await deleteBingoImage(bingo.id, 'template');
+      }
+      onTemplateChange('');
+      setSuccessNotice('Plantilla removida.');
+      setTimeout(() => setSuccessNotice(null), 3000);
+    } catch (err: any) {
+      setErrorNotice(err.message || 'Error al remover plantilla');
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const isFirebaseStored = currentTemplateUrl && currentTemplateUrl.includes('firebasestorage.googleapis.com');
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-amber-400" />
-            <label className="block text-sm font-bold text-white">
-              Plantilla Oficial del Cartón de Juego (<span className="font-mono text-amber-300">carton_7811_imprimible.jpg</span>)
-            </label>
-          </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            El diseño físico, logos (GYT, JCI), resolución ENREJA y los 8 premios quedan <strong>fijos e inalterables</strong>. El sistema sólo estampa el número de cartón y los 10 números de juego de cada comprador.
+          <label className="block text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+            <FileCheck className="w-4 h-4 text-blue-400" />
+            <span>3. Plantilla Oficial de Fondo del Cartón (Ticket Template)</span>
+          </label>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Imagen oficial sobre la cual se imprimen los números, código de barras y datos del comprador en el PDF descargable.
           </p>
         </div>
 
-        {currentTemplateUrl && (
-          <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[11px] font-bold text-emerald-400 shrink-0">
-            <FileCheck className="w-3.5 h-3.5" />
-            <span>Plantilla Fotográfica Activa</span>
-          </div>
-        )}
-      </div>
-
-      {errorNotice && (
-        <div className="p-3 rounded-xl bg-red-950/60 border border-red-800 text-red-300 text-xs flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{errorNotice}</span>
-        </div>
-      )}
-
-      {successNotice && (
-        <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{successNotice}</span>
-        </div>
-      )}
-
-      {/* Hidden File Input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files && e.target.files[0]) {
-            handleFileSelect(e.target.files[0]);
-          }
-        }}
-      />
-
-      {/* Upload and Control Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
-        <div className="flex items-center space-x-2 text-xs text-slate-300">
-          <span className="font-semibold text-white">Archivo base del cartón:</span>
-          <span className="text-slate-400">
-            {currentTemplateUrl ? 'Imagen JPG personalizada en uso' : 'Vector HD oficial de alta fidelidad'}
-          </span>
-        </div>
-
         <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>{currentTemplateUrl ? 'Reemplazar Imagen Oficial' : 'Cargar carton_7811_imprimible.jpg'}</span>
-          </button>
-
+          {isFirebaseStored && (
+            <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
+              <CloudCheck className="w-3 h-3 text-emerald-400" />
+              <span>Permanente en Firebase</span>
+            </span>
+          )}
           {currentTemplateUrl && (
             <button
               type="button"
-              onClick={handleRemoveTemplate}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-red-950/80 hover:text-red-300 text-slate-300 text-xs font-semibold transition-colors cursor-pointer border border-slate-700"
+              onClick={() => setIsPreviewOpen(true)}
+              className="text-xs text-blue-400 hover:text-blue-300 flex items-center space-x-1 cursor-pointer transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Usar Vector HD</span>
+              <Eye className="w-3.5 h-3.5" />
+              <span>Ver simulación con números</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Live Preview Container with Dropzone */}
-      <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-        className="relative p-3 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col items-center justify-center overflow-x-auto"
-      >
-        <div className="w-full max-w-2xl">
-          <OfficialBingoTicket
-            card={SAMPLE_CARD}
-            bingo={bingo}
-            templateImageUrl={currentTemplateUrl}
-            showUploader={false}
-            allowInteractivePlay={false}
+      {/* Main container */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Left preview / upload area */}
+        <div className="md:col-span-8">
+          {currentTemplateUrl ? (
+            <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 p-2 group">
+              <div className="relative w-full aspect-[2/1] rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center">
+                <img
+                  src={currentTemplateUrl}
+                  alt="Plantilla oficial"
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+
+                <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-3">
+                  <button
+                    type="button"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg transition-all cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Cambiar en Storage</span>
+                  </button>
+                  <a
+                    href={currentTemplateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium flex items-center space-x-1 transition-all"
+                    title="Ver archivo original"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    disabled={isUploading}
+                    onClick={handleRemove}
+                    className="px-3.5 py-2 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Quitar</span>
+                  </button>
+                </div>
+
+                {isUploading && (
+                  <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2">
+                    <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                    <span className="text-xs font-bold text-white">Subiendo plantilla a Firebase Storage...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-700 hover:border-blue-400 bg-slate-950 hover:bg-slate-950/80 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all aspect-[2/1] group"
+            >
+              {isUploading ? (
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                  <span className="text-xs font-bold text-white">Subiendo plantilla a Firebase Storage...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-800 group-hover:bg-blue-400/10 text-slate-400 group-hover:text-blue-400 flex items-center justify-center mb-2 transition-colors">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-white mb-0.5">
+                    Hacé clic para subir la plantilla oficial del cartón
+                  </p>
+                  <p className="text-xs text-slate-400 max-w-sm">
+                    Recomendado: Imagen horizontal de alta resolución (2000x1000 px, PNG o JPG). Se guardará en Firebase Storage: bingos/{bingo.id}/template.ext
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/jpg"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+              }
+            }}
           />
+
+          {errorNotice && (
+            <p className="text-xs text-rose-400 font-semibold mt-2 flex items-center space-x-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errorNotice}</span>
+            </p>
+          )}
+
+          {successNotice && (
+            <p className="text-xs text-emerald-300 font-semibold mt-2 flex items-center space-x-1.5 animate-fadeIn">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+              <span>{successNotice}</span>
+            </p>
+          )}
         </div>
-        <p className="text-[11px] text-slate-400 mt-2 text-center">
-          Vista previa del cartón impreso: Los números de la muestra (Nº 7811 y los 10 casilleros rojos) cambian dinámicamente para cada comprador.
-        </p>
+
+        {/* Right info */}
+        <div className="md:col-span-4 flex flex-col justify-between space-y-3">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-400 space-y-2">
+            <h5 className="font-bold text-white flex items-center gap-1.5">
+              <FileCheck className="w-4 h-4 text-blue-400" />
+              Fondo Oficial para Descargas
+            </h5>
+            <p className="text-[11px] leading-relaxed">
+              Esta imagen sirve como fondo oficial al emitir cartones. El sistema estampará sobre ella el número de cartón, bolillas y datos de fiscalización en tiempo real.
+            </p>
+            <p className="text-[11px] text-emerald-400/90 font-medium">
+              Almacenamiento seguro en Firebase Storage para descargas permanentes.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center justify-center space-x-2 border border-slate-700 transition-all cursor-pointer shadow-sm"
+          >
+            <Upload className="w-4 h-4 text-blue-400" />
+            <span>{currentTemplateUrl ? 'Subir nueva plantilla' : 'Cargar plantilla desde PC'}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Modal Preview */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-blue-400" />
+                <span>Simulación de Cartón Oficial con Plantilla de Firebase</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(false)}
+                className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-lg bg-slate-800 cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-950 p-2">
+              <OfficialBingoTicket
+                card={SAMPLE_CARD}
+                bingo={bingo}
+                templateImageUrl={currentTemplateUrl}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -41,9 +41,11 @@ export const TuBingoFooter: React.FC<TuBingoFooterProps> = ({ onOpenAdmin, onNav
             </button>
             <button
               onClick={onOpenAdmin}
-              className="text-blue-400 hover:text-blue-300 font-semibold transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-slate-200 transition-colors flex items-center space-x-1 cursor-pointer"
+              title="Acceso exclusivo para administradores"
             >
-              Panel de Gestión & BD
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-500/80" />
+              <span>Acceso Administración</span>
             </button>
           </div>
         </div>

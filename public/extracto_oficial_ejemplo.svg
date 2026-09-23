@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Document Background -->
+  <rect x="0" y="0" width="800" height="1100" fill="url(#bgGrad)"/>
+  
+  <!-- Outer Border & Security Guilloche Simulation -->
+  <rect x="25" y="25" width="750" height="1050" fill="none" stroke="#047857" stroke-width="4" rx="8"/>
+  <rect x="35" y="35" width="730" height="1030" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" rx="6"/>
+
+  <!-- Watermark -->
+  <text x="400" y="580" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="900" fill="#047857" fill-opacity="0.04" text-anchor="middle" transform="rotate(-30 400 580)">EXTRACTO OFICIAL</text>
+
+  <!-- Top Header Banner -->
+  <rect x="35" y="35" width="730" height="110" fill="url(#headerGrad)"/>
+  <text x="400" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">TuBINGO.com</text>
+  <text x="400" y="115" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="#fef08a" text-anchor="middle" letter-spacing="4">EXTRACTO OFICIAL DE SORTEO</text>
+
+  <!-- Legal & Draw Info -->
+  <rect x="60" y="170" width="680" height="90" fill="#f1f5f9" rx="8" stroke="#e2e8f0"/>
+  <text x="85" y="202" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="#334155">EDICIÓN: 14º Gran Bingo Monumental</text>
+  <text x="85" y="232" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#64748b">Fecha de sorteo: 15 de Agosto 2026 | Horario: 15:00 hs | Sala de Sorteos Oficial</text>
+  <text x="540" y="202" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#047857">ACTA Nº 0842/26</text>
+  <text x="540" y="232" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#64748b">Matrícula Esc. 4921</text>
+
+  <!-- Results Table Header -->
+  <rect x="60" y="280" width="680" height="42" fill="#0f172a" rx="6"/>
+  <text x="85" y="306" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#ffffff">JUGADA / PREMIO</text>
+  <text x="360" y="306" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#ffffff" text-anchor="center">CARTÓN GANADOR</text>
+  <text x="560" y="306" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#ffffff">IMPORTE / ADJUDICACIÓN</text>
+
+  <!-- Table Rows -->
+  <!-- Row 1 -->
+  <rect x="60" y="330" width="680" height="50" fill="#ffffff" stroke="#f1f5f9"/>
+  <text x="85" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">1ª Ronda - Línea</text>
+  <rect x="360" y="342" width="90" height="26" fill="#ecfdf5" rx="4" stroke="#a7f3d0"/>
+  <text x="405" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle"># 01842</text>
+  <text x="560" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#334155">$ 1.500.000</text>
+
+  <!-- Row 2 -->
+  <rect x="60" y="385" width="680" height="50" fill="#f8fafc" stroke="#f1f5f9"/>
+  <text x="85" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">1ª Ronda - Bingo</text>
+  <rect x="360" y="397" width="90" height="26" fill="#ecfdf5" rx="4" stroke="#a7f3d0"/>
+  <text x="405" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle"># 08215</text>
+  <text x="560" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#334155">$ 5.000.000</text>
+
+  <!-- Row 3 -->
+  <rect x="60" y="440" width="680" height="50" fill="#ffffff" stroke="#f1f5f9"/>
+  <text x="85" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">2ª Ronda - Línea</text>
+  <rect x="360" y="452" width="90" height="26" fill="#ecfdf5" rx="4" stroke="#a7f3d0"/>
+  <text x="405" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle"># 11940</text>
+  <text x="560" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#334155">$ 2.000.000</text>
+
+  <!-- Row 4 -->
+  <rect x="60" y="495" width="680" height="50" fill="#f8fafc" stroke="#f1f5f9"/>
+  <text x="85" y="525" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">2ª Ronda - Bingo</text>
+  <rect x="360" y="507" width="90" height="26" fill="#ecfdf5" rx="4" stroke="#a7f3d0"/>
+  <text x="405" y="525" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle"># 03417</text>
+  <text x="560" y="525" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#334155">$ 8.000.000</text>
+
+  <!-- Row 5: Premio Mayor -->
+  <rect x="60" y="550" width="680" height="58" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="2"/>
+  <text x="85" y="585" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#065f46">★ PREMIO EXTRAORDINARIO</text>
+  <rect x="360" y="563" width="90" height="30" fill="#047857" rx="5"/>
+  <text x="405" y="584" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="900" fill="#ffffff" text-anchor="middle"># 04521</text>
+  <text x="560" y="585" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#047857">PREMIO MAYOR ADJUDICADO</text>
+
+  <!-- Drawn Balls Grid Summary -->
+  <text x="60" y="645" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" fill="#0f172a">BOLILLAS EXTRAÍDAS EN ORDEN DE SORTEO:</text>
+  <rect x="60" y="660" width="680" height="150" fill="#f8fafc" rx="8" stroke="#e2e8f0"/>
+  
+  <text x="80" y="690" font-family="system-ui, -apple-system, monospace" font-size="13" fill="#334155" letter-spacing="3">04 - 18 - 25 - 33 - 42 - 50 - 61 - 74 - 88 - 12 - 09 - 31 - 44</text>
+  <text x="80" y="720" font-family="system-ui, -apple-system, monospace" font-size="13" fill="#334155" letter-spacing="3">56 - 67 - 78 - 83 - 15 - 22 - 39 - 47 - 59 - 63 - 71 - 85 - 02</text>
+  <text x="80" y="750" font-family="system-ui, -apple-system, monospace" font-size="13" fill="#334155" letter-spacing="3">19 - 27 - 38 - 41 - 55 - 69 - 80 - 89 - 14 - 23 - 35 - 49 - 58</text>
+  <text x="80" y="780" font-family="system-ui, -apple-system, monospace" font-size="13" fill="#334155" letter-spacing="3">64 - 76 - 87 - 07 - 16 - 29 - 36 - 48 - 53 - 68 - 77 - 86 - 90</text>
+
+  <!-- Official Notary Stamp & Signature Simulation -->
+  <g transform="translate(100, 860)">
+    <line x1="0" y1="90" x2="220" y2="90" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="110" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#475569" text-anchor="middle">Dirección General de Sorteos</text>
+    <text x="110" y="128" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Fiscalización TuBINGO.com</text>
+  </g>
+
+  <!-- Stamp Circle -->
+  <g transform="translate(400, 910)">
+    <circle cx="0" cy="0" r="48" fill="none" stroke="#047857" stroke-width="2.5" stroke-dasharray="4,2"/>
+    <circle cx="0" cy="0" r="42" fill="none" stroke="#047857" stroke-width="1"/>
+    <text x="0" y="-12" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="900" fill="#047857" text-anchor="middle" letter-spacing="1">FISCALIZADO</text>
+    <text x="0" y="5" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="900" fill="#047857" text-anchor="middle">OFICIAL</text>
+    <text x="0" y="20" font-family="system-ui, -apple-system, sans-serif" font-size="8" font-weight="700" fill="#047857" text-anchor="middle">TuBINGO.com</text>
+  </g>
+
+  <g transform="translate(480, 860)">
+    <line x1="0" y1="90" x2="220" y2="90" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="110" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#475569" text-anchor="middle">Escribano Público Nacional</text>
+    <text x="110" y="128" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Registro Notarial Nº 14</text>
+  </g>
+
+  <!-- Footer Disclaimer -->
+  <text x="400" y="1035" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" fill="#94a3b8" text-anchor="middle">Documento emitido conforme a las resoluciones oficiales vigentes. Prohibida su reproducción no autorizada.</text>
+</svg>

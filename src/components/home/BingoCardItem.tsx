@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, Ticket, ArrowRight, Eye } from 'lucide-react';
+import { Calendar, Clock, Ticket, ArrowRight, Eye, Ban } from 'lucide-react';
 import { AvailableBingoItem } from '../../data/featuredBingos';
 
 interface BingoCardItemProps {
@@ -71,25 +71,41 @@ export const BingoCardItem: React.FC<BingoCardItemProps> = ({
         {/* 3. Price & Action Buttons */}
         <div className="pt-3 border-t border-slate-100 space-y-3">
           {/* Price */}
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Valor del cartón
             </span>
-            <span className="text-2xl sm:text-3xl font-black text-emerald-700 font-mono tracking-tight">
+            <span className="text-xl sm:text-2xl md:text-3xl font-black text-emerald-700 font-mono tracking-tight whitespace-nowrap shrink-0">
               {bingo.formattedPrice}
             </span>
           </div>
 
           {/* Primary CTA: COMPRAR CARTÓN */}
-          <button
-            type="button"
-            onClick={() => onSelectBingo(bingo)}
-            className="w-full min-h-[48px] py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-md shadow-amber-400/20 hover:shadow-amber-400/40 transition-all duration-200 transform active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2.5"
-          >
-            <Ticket className="w-4 h-4 text-slate-950 shrink-0" />
-            <span>COMPRAR CARTÓN</span>
-            <ArrowRight className="w-4 h-4 text-slate-950 shrink-0" />
-          </button>
+          {bingo.salesClosed ? (
+            <div className="space-y-1">
+              <button
+                type="button"
+                disabled
+                className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 cursor-not-allowed border border-slate-300"
+              >
+                <Ban className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>VENTA CERRADA</span>
+              </button>
+              <p className="text-[10px] text-center text-rose-600 font-medium">
+                Cartones no vendidos dados de baja.
+              </p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSelectBingo(bingo)}
+              className="w-full min-h-[48px] py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-md shadow-amber-400/20 hover:shadow-amber-400/40 transition-all duration-200 transform active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2.5"
+            >
+              <Ticket className="w-4 h-4 text-slate-950 shrink-0" />
+              <span>COMPRAR CARTÓN</span>
+              <ArrowRight className="w-4 h-4 text-slate-950 shrink-0" />
+            </button>
+          )}
 
           {/* Secondary CTA: VER PREMIOS */}
           <button

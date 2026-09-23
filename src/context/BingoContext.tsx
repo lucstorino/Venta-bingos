@@ -15,6 +15,18 @@ import {
   initialPrizes,
 } from '../data/mockBingo';
 import { generateSampleCards, generateValidationCode } from '../utils/cardValidator';
+import { addOrUpdatePastBingo } from '../data/pastBingos';
+import { getBingoImages } from '../services/firebaseBingoStorageService';
+
+export interface StopSalesResult {
+  bingo: Bingo;
+  totalCards: number;
+  soldCards: BingoCard[];
+  unsoldCards: BingoCard[];
+  cancelledCount: number;
+  totalRevenue: number;
+  closedAt: number;
+}
 
 interface ActiveReservation {
   cardId: string;
@@ -31,6 +43,13 @@ interface BingoContextType {
   createBingo: (newBingo: Partial<Bingo>) => Bingo;
   updateBingo: (updated: Partial<Bingo>, id?: string) => void;
   deleteBingo: (id: string) => void;
+  stopBingoSales: (bingoId?: string) => StopSalesResult;
+  reopenBingoSales: (bingoId?: string) => void;
+  getBingoUnsoldCards: (bingoId?: string) => {
+    soldCards: BingoCard[];
+    unsoldCards: BingoCard[];
+    total: number;
+  };
   cards: BingoCard[];
   prizes: Prize[];
   orders: Order[];
@@ -191,14 +210,34 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             organizer: b.organizer || 'Organización Oficial de Bingo',
             termsAndConditions: b.termsAndConditions || b.terms,
             imageUrl: b.imageUrl,
+            prizesImageUrl: b.prizesImageUrl,
             supportWhatsapp: '+54 9 387 421-5005',
             supportHours: 'Lunes a Sábados de 09:00 a 20:00 hs',
           }));
+          // Merge with Firestore permanently stored images
+          const enhanced = await Promise.all(
+            mapped.map(async (m) => {
+              try {
+                const fsImages = await getBingoImages(m.id);
+                return {
+                  ...m,
+                  imageUrl: fsImages.cover || m.imageUrl,
+                  prizesImageUrl: fsImages.prizes || m.prizesImageUrl,
+                  ticketTemplateImage: fsImages.template || m.ticketTemplateImage,
+                  extractoImageUrl: fsImages.extract || m.extractoImageUrl,
+                  bannerImageUrl: fsImages.banner || m.bannerImageUrl,
+                };
+              } catch {
+                return m;
+              }
+            })
+          );
+
           setBingos((prev) => {
             const prevMap = new Map(prev.map((item) => [item.id, item]));
-            return mapped.map((m) => {
+            return enhanced.map((m) => {
               const existing = prevMap.get(m.id);
-              return existing ? { ...m, ...existing } : m;
+              return existing ? { ...m, ...existing, imageUrl: m.imageUrl || existing.imageUrl } : m;
             });
           });
         }
@@ -219,6 +258,7 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             reservationDurationMinutes: data.bingo.maxReservationMinutes,
             termsAndConditions: data.bingo.termsAndConditions || data.bingo.terms,
             imageUrl: data.bingo.imageUrl,
+            prizesImageUrl: data.bingo.prizesImageUrl,
           };
           setBingos((prev) => {
             const idx = prev.findIndex((b) => b.id === data.bingo.id);
@@ -633,6 +673,7 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         maxReservationMinutes: created.reservationDurationMinutes,
         terms: created.termsAndConditions,
         imageUrl: created.imageUrl,
+        prizesImageUrl: created.prizesImageUrl,
       }),
     }).catch(() => {});
 
@@ -657,6 +698,7 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               maxReservationMinutes: next.reservationDurationMinutes,
               terms: next.termsAndConditions,
               imageUrl: next.imageUrl,
+              prizesImageUrl: next.prizesImageUrl,
             }),
           }).catch(() => {});
           return next;
@@ -680,6 +722,148 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     fetch(`/api/bingos/${id}`, { method: 'DELETE' }).catch(() => {});
   }, [activeBingoId]);
+
+  const getBingoUnsoldCards = useCallback(
+    (bingoId?: string) => {
+      const targetId = bingoId || activeBingoId || bingo.id;
+      const targetCards = cards.filter((c) => {
+        if (c.bingoId) {
+          return (
+            c.bingoId === targetId ||
+            (c.bingoId === 'bingo-default' && (targetId === bingos[0]?.id || targetId === activeBingoId))
+          );
+        }
+        return targetId === bingos[0]?.id || targetId === activeBingoId;
+      });
+
+      const soldCards = targetCards.filter((c) => c.status === 'SOLD');
+      const unsoldCards = targetCards.filter((c) => c.status !== 'SOLD');
+
+      return {
+        soldCards,
+        unsoldCards,
+        total: targetCards.length,
+      };
+    },
+    [activeBingoId, bingo, bingos, cards]
+  );
+
+  const stopBingoSales = useCallback(
+    (targetBingoId?: string): StopSalesResult => {
+      const idToStop = targetBingoId || activeBingoId || bingo.id;
+      const now = Date.now();
+      const currentBingoObj = bingos.find((b) => b.id === idToStop) || bingo;
+
+      const stoppedBingo: Bingo = {
+        ...currentBingoObj,
+        status: 'FINISHED',
+        salesClosed: true,
+        salesClosedAt: now,
+      };
+
+      // 1. Update bingos list
+      setBingos((prev) => prev.map((b) => (b.id === idToStop ? stoppedBingo : b)));
+
+      // 2. Mark unsold / available / reserved cards for this bingo as CANCELLED (dados de baja)
+      const soldList: BingoCard[] = [];
+      const unsoldList: BingoCard[] = [];
+
+      setCards((prevCards) =>
+        prevCards.map((c) => {
+          const matchesBingo =
+            !c.bingoId ||
+            c.bingoId === idToStop ||
+            (c.bingoId === 'bingo-default' && (idToStop === bingos[0]?.id || idToStop === activeBingoId));
+
+          if (!matchesBingo) return c;
+
+          if (c.status === 'SOLD') {
+            soldList.push(c);
+            return c;
+          } else {
+            const cancelled: BingoCard = {
+              ...c,
+              status: 'CANCELLED',
+              reservedAt: undefined,
+              reservedUntil: undefined,
+              reservedBySessionId: undefined,
+            };
+            unsoldList.push(cancelled);
+            return cancelled;
+          }
+        })
+      );
+
+      // 3. Clear active reservation
+      setActiveReservation(null);
+
+      // 4. Automatically sync with pastBingos so extract can be uploaded
+      addOrUpdatePastBingo({
+        id: `past-${stoppedBingo.id}`,
+        name: stoppedBingo.name,
+        drawDate: stoppedBingo.drawDate,
+        drawTime: stoppedBingo.drawTime,
+        image: stoppedBingo.imageUrl || '/src/assets/images/bingo_casa_card_1789819899795.jpg',
+        extractoImage: stoppedBingo.extractoImageUrl || '/extracto_oficial_ejemplo.svg',
+        mainPrize: stoppedBingo.description || 'Premios Oficiales',
+        totalPrizes: `$ ${(soldList.length * stoppedBingo.price).toLocaleString('es-AR')} recaudados`,
+        location: stoppedBingo.location || 'Sede Central Oficial',
+      });
+
+      const totalRevenue = soldList.length * stoppedBingo.price;
+
+      return {
+        bingo: stoppedBingo,
+        totalCards: soldList.length + unsoldList.length,
+        soldCards: soldList,
+        unsoldCards: unsoldList,
+        cancelledCount: unsoldList.length,
+        totalRevenue,
+        closedAt: now,
+      };
+    },
+    [activeBingoId, bingo, bingos]
+  );
+
+  const reopenBingoSales = useCallback(
+    (targetBingoId?: string) => {
+      const idToReopen = targetBingoId || activeBingoId || bingo.id;
+
+      setBingos((prev) =>
+        prev.map((b) => {
+          if (b.id === idToReopen) {
+            return {
+              ...b,
+              status: 'ACTIVE',
+              salesClosed: false,
+              salesClosedAt: undefined,
+            };
+          }
+          return b;
+        })
+      );
+
+      setCards((prevCards) =>
+        prevCards.map((c) => {
+          const matchesBingo =
+            !c.bingoId ||
+            c.bingoId === idToReopen ||
+            (c.bingoId === 'bingo-default' && (idToReopen === bingos[0]?.id || idToReopen === activeBingoId));
+
+          if (!matchesBingo) return c;
+
+          if (c.status === 'CANCELLED' && !c.soldToOrderId) {
+            return {
+              ...c,
+              status: 'AVAILABLE',
+            };
+          }
+          return c;
+        })
+      );
+    },
+    [activeBingoId, bingo, bingos]
+  );
 
   const addPrize = useCallback(
     (prize: Omit<Prize, 'id' | 'bingoId'>) => {
@@ -851,6 +1035,9 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createBingo,
         updateBingo,
         deleteBingo,
+        stopBingoSales,
+        reopenBingoSales,
+        getBingoUnsoldCards,
         cards,
         prizes,
         orders,
