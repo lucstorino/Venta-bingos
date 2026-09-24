@@ -57,16 +57,16 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
 
     setIsUploading(true);
     try {
-      // 1. Subir físicamente a Firebase Storage en: bingos/{bingo.id}/template.ext
+      // 1. Subir de forma segura y permanente (servidor + Firestore)
       const { url } = await uploadBingoImage(bingo.id || 'bingo-oficial-2026', 'template', file);
 
       // 2. Notificar cambio con la URL permanente
       onTemplateChange(url);
-      setSuccessNotice('¡Plantilla guardada permanentemente en Firebase Storage!');
+      setSuccessNotice('¡Plantilla guardada exitosamente!');
       setTimeout(() => setSuccessNotice(null), 4000);
     } catch (err: any) {
-      console.error('Error subiendo plantilla a Firebase Storage:', err);
-      setErrorNotice(err.message || 'Error al guardar en Firebase Storage.');
+      console.error('Error subiendo plantilla:', err);
+      setErrorNotice(err.message || 'Error al procesar la plantilla.');
     } finally {
       setIsUploading(false);
     }
@@ -77,7 +77,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
     setIsUploading(true);
     try {
       if (bingo.id) {
-        await deleteBingoImage(bingo.id, 'template');
+        await deleteBingoImage(bingo.id, 'template', currentTemplateUrl);
       }
       onTemplateChange('');
       setSuccessNotice('Plantilla removida.');
@@ -89,7 +89,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
     }
   };
 
-  const isFirebaseStored = currentTemplateUrl && currentTemplateUrl.includes('firebasestorage.googleapis.com');
+  const hasTemplate = Boolean(currentTemplateUrl);
 
   return (
     <div className="space-y-4">
@@ -106,10 +106,10 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
         </div>
 
         <div className="flex items-center space-x-2">
-          {isFirebaseStored && (
+          {hasTemplate && (
             <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
               <CloudCheck className="w-3 h-3 text-emerald-400" />
-              <span>Permanente en Firebase</span>
+              <span>Plantilla activa</span>
             </span>
           )}
           {currentTemplateUrl && (
@@ -172,7 +172,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
                 {isUploading && (
                   <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2">
                     <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                    <span className="text-xs font-bold text-white">Subiendo plantilla a Firebase Storage...</span>
+                    <span className="text-xs font-bold text-white">Guardando plantilla oficial...</span>
                   </div>
                 )}
               </div>
@@ -185,7 +185,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
               {isUploading ? (
                 <div className="flex flex-col items-center justify-center space-y-2">
                   <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                  <span className="text-xs font-bold text-white">Subiendo plantilla a Firebase Storage...</span>
+                  <span className="text-xs font-bold text-white">Guardando plantilla oficial...</span>
                 </div>
               ) : (
                 <>
@@ -196,7 +196,7 @@ export const OfficialTicketTemplateUploader: React.FC<OfficialTicketTemplateUplo
                     Hacé clic para subir la plantilla oficial del cartón
                   </p>
                   <p className="text-xs text-slate-400 max-w-sm">
-                    Recomendado: Imagen horizontal de alta resolución (2000x1000 px, PNG o JPG). Se guardará en Firebase Storage: bingos/{bingo.id}/template.ext
+                    Recomendado: Imagen horizontal de alta resolución (2000x1000 px, PNG o JPG). Se guardará de forma permanente y optimizada.
                   </p>
                 </>
               )}

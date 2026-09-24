@@ -44,17 +44,17 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
     }
 
     setIsUploading(true);
-    setUploadProgress('Subiendo afiche a Firebase Storage...');
+    setUploadProgress('Guardando afiche de premios...');
 
     try {
-      // Subir físicamente a Firebase Storage en: bingos/{bingoId}/prizes.ext
+      // Subir de forma segura y permanente (servidor + Firestore)
       const { url } = await uploadBingoImage(bingoId, 'prizes', file);
       onImageChange(url);
-      setSuccessNotice('Gráfica de premios subida permanentemente a Firebase Storage.');
+      setSuccessNotice('¡Gráfica de premios subida y guardada exitosamente!');
       setTimeout(() => setSuccessNotice(null), 4000);
     } catch (err: any) {
-      console.error('Error subiendo gráfica de premios a Firebase Storage:', err);
-      setErrorNotice(err.message || 'Error al conectar con Firebase Storage.');
+      console.error('Error subiendo gráfica de premios:', err);
+      setErrorNotice(err.message || 'Error al procesar la imagen de premios.');
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -74,7 +74,7 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
     setIsUploading(true);
     try {
       if (bingoId) {
-        await deleteBingoImage(bingoId, 'prizes');
+        await deleteBingoImage(bingoId, 'prizes', currentImageUrl);
       }
       onImageChange('');
       setSuccessNotice('Gráfica de premios removida.');
@@ -86,7 +86,7 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
     }
   };
 
-  const isFirebaseStored = currentImageUrl && currentImageUrl.includes('firebasestorage.googleapis.com');
+  const hasImage = Boolean(currentImageUrl);
 
   return (
     <div className="space-y-4">
@@ -97,14 +97,14 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
             <span>2. Gráfica Oficial de Premios Detallados (Prizes Image)</span>
           </label>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            Flyer o afiche oficial con la tabla de premios. Se almacena en Firebase Storage: bingos/{bingoId}/prizes.ext
+            Flyer o afiche oficial con la tabla de premios. Se almacena de forma permanente y optimizada.
           </p>
         </div>
 
-        {isFirebaseStored && (
+        {hasImage && (
           <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
             <CloudCheck className="w-3 h-3 text-emerald-400" />
-            <span>Almacenada en Firebase</span>
+            <span>Imagen activa</span>
           </span>
         )}
       </div>
@@ -129,7 +129,7 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
                   className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg transition-all cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>Cambiar en Storage</span>
+                  <span>Cambiar afiche</span>
                 </button>
                 <a
                   href={currentImageUrl}
@@ -187,7 +187,7 @@ export const BingoPrizesImageUploader: React.FC<BingoPrizesImageUploaderProps> =
                     Hacé clic o arrastrá el afiche de premios aquí
                   </p>
                   <p className="text-xs text-slate-400 max-w-xs">
-                    Se almacena físicamente en Firebase Storage para verse en el modal "Ver Premios".
+                    Subí la gráfica oficial que se mostrará en el modal de "Ver Premios".
                   </p>
                 </>
               )}

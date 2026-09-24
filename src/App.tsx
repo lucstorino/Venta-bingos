@@ -190,7 +190,7 @@ function MainAppContent() {
         Otherwise, we render the public store with TuBingoNavbar, Home/Card selection, and Footer.
       */}
       {currentScreen === 'admin' ? (
-        <main className="flex-1 bg-slate-950">
+        <main className="flex-1 bg-slate-950 animate-fade-in">
           {!isAuthenticated ? (
             <AdminLogin
               onSuccess={() => {
@@ -221,52 +221,60 @@ function MainAppContent() {
           <main className="flex-1">
             {/* 1. HOME SCREEN - Bingos disponibles con diseño visual prioritario */}
             {currentScreen === 'home' && (
-              <HomeView
-                onSelectBingo={handleSelectBingo}
-                onOpenSupport={() => setIsSupportModalOpen(true)}
-              />
+              <div key="home" className="animate-fade-in">
+                <HomeView
+                  onSelectBingo={handleSelectBingo}
+                  onOpenSupport={() => setIsSupportModalOpen(true)}
+                />
+              </div>
             )}
 
             {/* 2. CARD SELECTION SCREEN (matching 3) */}
             {currentScreen === 'select-card' && (
-              <CardSelectionView
-                bingo={selectedBingo}
-                cards={cards}
-                onBack={() => navigateToScreen('home')}
-                onAddToCart={handleAddToCart}
-              />
+              <div key="select-card" className="animate-fade-in">
+                <CardSelectionView
+                  bingo={selectedBingo}
+                  cards={cards}
+                  onBack={() => navigateToScreen('home')}
+                  onAddToCart={handleAddToCart}
+                />
+              </div>
             )}
 
             {/* 3. CHECKOUT SCREEN (matching 5) */}
             {currentScreen === 'checkout' && cartCards.length > 0 && (
-              <CheckoutView
-                cards={cartCards}
-                bingo={selectedBingo}
-                onBack={() => {
-                  navigateToScreen('select-card');
-                  setIsCartOpen(true);
-                }}
-                onSubmitPayment={handleSubmitPayment}
-                isProcessing={isProcessingPayment}
-              />
+              <div key="checkout" className="animate-fade-in">
+                <CheckoutView
+                  cards={cartCards}
+                  bingo={selectedBingo}
+                  onBack={() => {
+                    navigateToScreen('select-card');
+                    setIsCartOpen(true);
+                  }}
+                  onSubmitPayment={handleSubmitPayment}
+                  isProcessing={isProcessingPayment}
+                />
+              </div>
             )}
 
             {/* 4. CONFIRMATION SCREEN (matching 6) */}
             {currentScreen === 'confirmation' && confirmedOrder && (
-              <ConfirmationView
-                order={confirmedOrder}
-                bingo={selectedBingo}
-                onViewPurchases={() => {
-                  setDigitalCardOrder(confirmedOrder);
-                }}
-                onOpenTicketModal={(order) => {
-                  setDigitalCardOrder(order);
-                }}
-                onNewGame={() => {
-                  setConfirmedOrder(null);
-                  navigateToScreen('home');
-                }}
-              />
+              <div key="confirmation" className="animate-fade-in">
+                <ConfirmationView
+                  order={confirmedOrder}
+                  bingo={selectedBingo}
+                  onViewPurchases={() => {
+                    setDigitalCardOrder(confirmedOrder);
+                  }}
+                  onOpenTicketModal={(order) => {
+                    setDigitalCardOrder(order);
+                  }}
+                  onNewGame={() => {
+                    setConfirmedOrder(null);
+                    navigateToScreen('home');
+                  }}
+                />
+              </div>
             )}
           </main>
 

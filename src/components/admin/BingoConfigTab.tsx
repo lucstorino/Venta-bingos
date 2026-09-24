@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useBingo } from '../../context/BingoContext';
 import { Bingo, BingoStatus } from '../../types';
+import { BingoFiveImagesManager } from './BingoFiveImagesManager';
 import { BingoCoverUploader } from './BingoCoverUploader';
 import { OfficialTicketTemplateUploader } from './OfficialTicketTemplateUploader';
 import { BingoPrizesImageUploader } from './BingoPrizesImageUploader';
@@ -374,44 +375,22 @@ export const BingoConfigTab: React.FC = () => {
           )}
         </div>
 
-        {/* Foto de Portada del Bingo (Upload / Change) */}
+        {/* Gestor Maestro de las 5 Imágenes del Bingo en Firebase */}
         <div className="pb-6 border-b border-slate-800">
-          <BingoCoverUploader
-            bingoId={formData.id}
-            currentImageUrl={formData.imageUrl}
-            onImageChange={(imageUrl) => setFormData({ ...formData, imageUrl })}
+          <BingoFiveImagesManager
+            bingo={formData}
+            onUpdateBingoImages={(updatedFields) => {
+              setFormData((prev) => ({ ...prev, ...updatedFields }));
+            }}
           />
         </div>
 
-        {/* Gráfica Oficial de Premios Detallados (Upload / Change) */}
-        <div className="pb-6 border-b border-slate-800">
-          <BingoPrizesImageUploader
-            bingoId={formData.id}
-            currentImageUrl={formData.prizesImageUrl}
-            onImageChange={(prizesImageUrl) => setFormData({ ...formData, prizesImageUrl })}
-          />
-        </div>
-
-        {/* Plantilla Oficial del Cartón de Juego */}
+        {/* Parámetros Oficiales de Impresión de la Plantilla (Tipo 3) */}
         <div className="pb-6 border-b border-slate-800">
           <OfficialTicketTemplateUploader
-            currentTemplateUrl={formData.ticketTemplateImage}
-            onTemplateChange={(url) => setFormData({ ...formData, ticketTemplateImage: url })}
+            currentTemplateUrl={formData.tipo3Url || formData.ticketTemplateImage}
+            onTemplateChange={(url) => setFormData((prev) => ({ ...prev, ticketTemplateImage: url, tipo3Url: url }))}
             bingo={formData}
-          />
-        </div>
-
-        {/* Banner Promocional Secundario (5to Tipo de Imagen del Bingo) */}
-        <div className="pb-6 border-b border-slate-800">
-          <BingoImageUploader
-            bingoId={formData.id}
-            imageType="banner"
-            title="5. Banner o Imagen Promocional Secundaria"
-            description="Imagen publicitaria para campañas, redes y banners secundarios de este bingo."
-            currentImageUrl={formData.bannerImageUrl}
-            onImageChange={(url) => setFormData({ ...formData, bannerImageUrl: url })}
-            aspectRatioLabel="21:9 o 16:9"
-            recommendedSize="Recomendado: 1920x600 o 1200x630 (JPG, PNG o WebP)"
           />
         </div>
 
