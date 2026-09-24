@@ -2,15 +2,21 @@
   "entities": {
     "bingos": {
       "title": "Bingos Oficiales",
-      "description": "Entidad principal de sorteos con sus 5 imágenes de Firebase Storage y parámetros de juego",
+      "description": "Entidad principal de sorteos con sus 5 tipos de imágenes en Firebase y parámetros de juego",
       "properties": {
-        "id": { "type": "string", "description": "Código o ID del bingo" },
+        "id": { "type": "string", "description": "Código o ID único del bingo" },
         "name": { "type": "string", "description": "Nombre oficial del bingo" },
-        "imageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Foto de portada)" },
-        "prizesImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Gráfica de premios)" },
-        "ticketTemplateImage": { "type": "string", "description": "URL permanente en Firebase Storage (Plantilla del cartón)" },
-        "extractoImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Extracto oficial)" },
-        "bannerImageUrl": { "type": "string", "description": "URL permanente en Firebase Storage (Banner promocional)" },
+        "tipo1Url": { "type": "string", "description": "Firebase Tipo 1 - Portada Principal del Bingo" },
+        "tipo2Url": { "type": "string", "description": "Firebase Tipo 2 - Gráfica Oficial de Premios" },
+        "tipo3Url": { "type": "string", "description": "Firebase Tipo 3 - Plantilla Oficial del Cartón" },
+        "tipo4Url": { "type": "string", "description": "Firebase Tipo 4 - Extracto Oficial del Sorteo" },
+        "tipo5Url": { "type": "string", "description": "Firebase Tipo 5 - Banner Promocional / Publicitario" },
+        "imageUrl": { "type": "string", "description": "Alias para Tipo 1 (Foto de portada)" },
+        "prizesImageUrl": { "type": "string", "description": "Alias para Tipo 2 (Gráfica de premios)" },
+        "ticketTemplateImage": { "type": "string", "description": "Alias para Tipo 3 (Plantilla del cartón)" },
+        "extractoImageUrl": { "type": "string", "description": "Alias para Tipo 4 (Extracto oficial)" },
+        "bannerImageUrl": { "type": "string", "description": "Alias para Tipo 5 (Banner promocional)" },
+        "firebaseImages": { "type": "object", "description": "Mapa estructurado de los 5 tipos de imágenes en Firebase con URL y metadatos de reemplazo" },
         "imagesMetadata": { "type": "object", "description": "Metadatos detallados de Storage por tipo" },
         "updatedAt": { "type": "string", "description": "Fecha ISO de última actualización" }
       },

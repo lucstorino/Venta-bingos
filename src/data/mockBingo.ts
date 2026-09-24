@@ -1,4 +1,4 @@
-import { Bingo, BingoCard, MercadoPagoConfig, Prize } from '../types';
+import { Bingo, BingoCard, MercadoPagoConfig, Prize, Order } from '../types';
 
 export const initialBingos: Bingo[] = [
   {
@@ -321,3 +321,129 @@ export const initialMercadoPagoConfig: MercadoPagoConfig = {
   webhookUrl: 'https://api.tudominio.com/api/mercadopago/webhook',
   autoApproveInSandbox: true,
 };
+
+export const initialOrders: Order[] = [
+  {
+    id: 'ORD-1727104820-146002',
+    bingoId: 'bingo-2026-01',
+    cardId: 'card-bingo-2026-01-146002',
+    cardNumber: 146002,
+    cardIds: ['card-bingo-2026-01-146002', 'card-bingo-2026-01-146003'],
+    cardNumbers: [146002, 146003],
+    totalCards: 2,
+    customer: {
+      name: 'Carlos Alberto',
+      lastname: 'Gómez',
+      dni: '32450812',
+      address: 'Av. San Martín 1420',
+      city: 'Salta Capital',
+      phone: '+54 9 387 512-3490',
+      email: 'carlos.gomez@gmail.com',
+    },
+    comprador: {
+      nombreApellido: 'Carlos Alberto Gómez',
+      dni: '32450812',
+      direccion: 'Av. San Martín 1420',
+      localidad: 'Salta Capital',
+      telefono: '+54 9 387 512-3490',
+    },
+    amount: 5000,
+    status: 'PAID',
+    createdAt: Date.now() - 1000 * 60 * 45, // 45 mins ago
+    paidAt: Date.now() - 1000 * 60 * 44,
+    paymentId: 'MP-84920194',
+    validationCode: 'VAL-9281',
+  },
+  {
+    id: 'ORD-1727091200-146005',
+    bingoId: 'bingo-2026-01',
+    cardId: 'card-bingo-2026-01-146005',
+    cardNumber: 146005,
+    cardIds: ['card-bingo-2026-01-146005'],
+    cardNumbers: [146005],
+    totalCards: 1,
+    customer: {
+      name: 'María Florencia',
+      lastname: 'Fernández',
+      dni: '28192401',
+      address: 'Belgrano 740',
+      city: 'Rosario de Lerma',
+      phone: '+54 9 387 481-9921',
+      email: 'mflorencia.f@hotmail.com',
+    },
+    comprador: {
+      nombreApellido: 'María Florencia Fernández',
+      dni: '28192401',
+      direccion: 'Belgrano 740',
+      localidad: 'Rosario de Lerma',
+      telefono: '+54 9 387 481-9921',
+    },
+    amount: 2500,
+    status: 'PAID',
+    createdAt: Date.now() - 1000 * 60 * 180, // 3 hours ago
+    paidAt: Date.now() - 1000 * 60 * 179,
+    paymentId: 'MP-77401928',
+    validationCode: 'VAL-4019',
+  },
+  {
+    id: 'ORD-1727083000-146012',
+    bingoId: 'bingo-2026-01',
+    cardId: 'card-bingo-2026-01-146012',
+    cardNumber: 146012,
+    cardIds: ['card-bingo-2026-01-146012', 'card-bingo-2026-01-146015', 'card-bingo-2026-01-146018'],
+    cardNumbers: [146012, 146015, 146018],
+    totalCards: 3,
+    customer: {
+      name: 'Lucas Matías',
+      lastname: 'Rodríguez',
+      dni: '40812339',
+      address: 'Pellegrini 350',
+      city: 'General Güemes',
+      phone: '+54 9 387 602-1845',
+      email: 'lucas.rod@yahoo.com.ar',
+    },
+    comprador: {
+      nombreApellido: 'Lucas Matías Rodríguez',
+      dni: '40812339',
+      direccion: 'Pellegrini 350',
+      localidad: 'General Güemes',
+      telefono: '+54 9 387 602-1845',
+    },
+    amount: 7500,
+    status: 'PENDING',
+    createdAt: Date.now() - 1000 * 60 * 60 * 6, // 6 hours ago
+    paymentId: 'TRANSF-PENDIENTE',
+    validationCode: 'VAL-1845',
+  },
+  {
+    id: 'ORD-1726980000-146025',
+    bingoId: 'bingo-2026-02',
+    cardId: 'card-bingo-2026-01-146025',
+    cardNumber: 146025,
+    cardIds: ['card-bingo-2026-01-146025'],
+    cardNumbers: [146025],
+    totalCards: 1,
+    customer: {
+      name: 'Silvia Beatriz',
+      lastname: 'Mendoza',
+      dni: '24981033',
+      address: 'Alvarado 1120',
+      city: 'Salta Capital',
+      phone: '+54 9 387 409-2231',
+      email: 'silvia.mendoza@gmail.com',
+    },
+    comprador: {
+      nombreApellido: 'Silvia Beatriz Mendoza',
+      dni: '24981033',
+      direccion: 'Alvarado 1120',
+      localidad: 'Salta Capital',
+      telefono: '+54 9 387 409-2231',
+    },
+    amount: 3000,
+    status: 'PAID',
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2, // 2 days ago
+    paidAt: Date.now() - 1000 * 60 * 60 * 24 * 2 + 120000,
+    paymentId: 'MP-63910244',
+    validationCode: 'VAL-7721',
+  },
+];

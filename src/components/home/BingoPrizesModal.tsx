@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { Prize } from '../../types';
 import { AvailableBingoItem } from '../../data/featuredBingos';
+import { useAdminAuth } from '../../context/AdminAuthContext';
+import { uploadBingoImage } from '../../services/firebaseBingoStorageService';
 
 interface BingoPrizesModalProps {
   isOpen: boolean;
@@ -30,12 +32,14 @@ export const BingoPrizesModal: React.FC<BingoPrizesModalProps> = ({
   bingo,
   onBuyTicket,
 }) => {
+  const { isAuthenticated } = useAdminAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localPrizesImage, setLocalPrizesImage] = useState<string>('');
   const [hasCustomImage, setHasCustomImage] = useState<boolean>(false);
   const [showUrlInput, setShowUrlInput] = useState<boolean>(false);
   const [urlInput, setUrlInput] = useState<string>('');
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -70,7 +74,7 @@ export const BingoPrizesModal: React.FC<BingoPrizesModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -79,25 +83,41 @@ export const BingoPrizesModal: React.FC<BingoPrizesModalProps> = ({
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      alert('La imagen no debe superar los 8MB.');
+    if (file.size > 15 * 1024 * 1024) {
+      alert('La imagen no debe superar los 15MB.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (result) {
-        setLocalPrizesImage(result);
-        setHasCustomImage(true);
-        localStorage.setItem(`tubingo_prizes_img_${bingo.id}`, result);
-        setFeedbackNotice('¡Imagen de premios cargada y guardada con éxito!');
-        setTimeout(() => setFeedbackNotice(null), 3500);
-      }
-    };
-    reader.readAsDataURL(file);
-    // Reset file input so same file can be re-selected if desired
-    e.target.value = '';
+    setIsUploading(true);
+    try {
+      const { url } = await uploadBingoImage(bingo.id, 'prizes', file);
+      setLocalPrizesImage(url);
+      setHasCustomImage(true);
+      try {
+        localStorage.setItem(`tubingo_prizes_img_${bingo.id}`, url);
+      } catch {}
+      setFeedbackNotice('¡Imagen de premios guardada exitosamente!');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+    } catch {
+      // Fallback local reader
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setLocalPrizesImage(result);
+          setHasCustomImage(true);
+          try {
+            localStorage.setItem(`tubingo_prizes_img_${bingo.id}`, result);
+          } catch {}
+          setFeedbackNotice('¡Imagen de premios cargada con éxito!');
+          setTimeout(() => setFeedbackNotice(null), 3500);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleApplyUrl = () => {
@@ -173,58 +193,61 @@ export const BingoPrizesModal: React.FC<BingoPrizesModalProps> = ({
           </div>
         </div>
 
-        {/* Toolbar: Upload or change prizes image */}
-        <div className="px-4 sm:px-6 py-2.5 bg-slate-100/90 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center space-x-2 text-slate-700 font-bold">
-            <ImageIcon className="w-4 h-4 text-emerald-700 shrink-0" />
-            <span>Gráfica oficial de premios</span>
-          </div>
+        {/* Toolbar: Upload or change prizes image (ONLY VISIBLE FOR ADMIN) */}
+        {isAuthenticated && (
+          <div className="px-4 sm:px-6 py-2.5 bg-amber-50/90 border-b border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center space-x-2 text-amber-900 font-bold">
+              <ImageIcon className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>Gestión de Premios Oficiales (Modo Administrador)</span>
+            </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-2xs cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>{hasCustomImage ? 'Cambiar imagen' : 'Cargar imagen de premios'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowUrlInput(!showUrlInput)}
-              className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold transition-all cursor-pointer"
-              title="Pegar enlace de imagen"
-            >
-              <Link2 className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">URL</span>
-            </button>
-
-            {hasCustomImage && (
               <button
                 type="button"
-                onClick={handleResetToDefault}
-                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-slate-600 hover:text-rose-700 font-semibold transition-all cursor-pointer"
-                title="Restaurar imagen por defecto"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-60"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Restaurar</span>
+                <Upload className="w-3.5 h-3.5" />
+                <span>{isUploading ? 'Subiendo...' : hasCustomImage ? 'Cambiar imagen' : 'Cargar imagen de premios'}</span>
               </button>
-            )}
-          </div>
-        </div>
 
-        {/* URL Input Form if toggled */}
-        {showUrlInput && (
+              <button
+                type="button"
+                onClick={() => setShowUrlInput(!showUrlInput)}
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold transition-all cursor-pointer"
+                title="Pegar enlace de imagen"
+              >
+                <Link2 className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">URL</span>
+              </button>
+
+              {hasCustomImage && (
+                <button
+                  type="button"
+                  onClick={handleResetToDefault}
+                  className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 text-slate-600 hover:text-rose-700 font-semibold transition-all cursor-pointer"
+                  title="Restaurar imagen por defecto"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Restaurar</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* URL Input Form if toggled (Only for Admin) */}
+        {isAuthenticated && showUrlInput && (
           <div className="px-4 sm:px-6 py-2.5 bg-emerald-50/60 border-b border-emerald-200 flex items-center gap-2 animate-fadeIn text-xs">
             <input
               type="text"
@@ -244,7 +267,7 @@ export const BingoPrizesModal: React.FC<BingoPrizesModalProps> = ({
             <button
               type="button"
               onClick={() => setShowUrlInput(false)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

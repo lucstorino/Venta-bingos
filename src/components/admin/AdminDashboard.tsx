@@ -4,6 +4,7 @@ import {
   Layers,
   Trophy,
   ShoppingBag,
+  ClipboardList,
   CreditCard,
   RotateCcw,
   ShieldCheck,
@@ -19,6 +20,7 @@ import {
 import { BingoConfigTab } from './BingoConfigTab';
 import { CardsManagementTab } from './CardsManagementTab';
 import { PrizesManagementTab } from './PrizesManagementTab';
+import { OrdersHistoryTab } from './OrdersHistoryTab';
 import { OrdersManagementTab } from './OrdersManagementTab';
 import { MercadoPagoTab } from './MercadoPagoTab';
 import { DatabaseManagerTab } from './DatabaseManagerTab';
@@ -34,7 +36,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewOrderTicket, onGoToHome }) => {
-  const { bingo, bingos, resetAllData } = useBingo();
+  const { bingo, bingos, orders, resetAllData } = useBingo();
   const { adminUser, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<'BINGO' | 'CARDS' | 'PRIZES' | 'ORDERS' | 'EXTRACTS' | 'MERCADOPAGO' | 'DATABASE'>('BINGO');
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
@@ -167,8 +169,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewOrderTicke
               : 'text-slate-400 hover:text-white hover:bg-slate-850'
           }`}
         >
-          <ShoppingBag className="w-4 h-4" />
-          <span>Ventas & Trazabilidad</span>
+          <ClipboardList className="w-4 h-4" />
+          <span>Historial de Pedidos</span>
+          {orders?.length > 0 && (
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === 'ORDERS'
+                  ? 'bg-slate-950 text-amber-400'
+                  : 'bg-amber-500/20 text-amber-400'
+              }`}
+            >
+              {orders.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -216,7 +229,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewOrderTicke
         {activeTab === 'CARDS' && <CardsManagementTab />}
         {activeTab === 'PRIZES' && <PrizesManagementTab />}
         {activeTab === 'ORDERS' && (
-          <OrdersManagementTab onViewOrderTicket={onViewOrderTicket} />
+          <OrdersHistoryTab onViewOrderTicket={onViewOrderTicket} />
         )}
         {activeTab === 'EXTRACTS' && <ExtractsManagementTab onGoToHome={onGoToHome} />}
         {activeTab === 'MERCADOPAGO' && <MercadoPagoTab />}
