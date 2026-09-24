@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { dbService, initDatabase } from './src/server/db';
+import { nestBackend } from './src/server/nestBackendAdapter';
 
 async function startServer() {
   const app = express();
@@ -65,8 +67,19 @@ async function startServer() {
   });
 
   // 1. Bingos
-  app.get('/api/bingos/active', (req, res) => {
+  app.get('/api/bingos/active', async (req, res) => {
     try {
+      // Try the real backend (bingos_back_js) first; fall back to the local mock
+      // if it's unreachable or the bingo isn't known there (no prizes API there yet).
+      try {
+        const bingo = await nestBackend.getActiveBingo();
+        if (bingo) {
+          const prizes = dbService.getPrizes(bingo.id);
+          return res.json({ bingo, prizes });
+        }
+      } catch {
+        // Nest backend not available, fall through to local mock.
+      }
       const bingo = dbService.getActiveBingo();
       if (!bingo) {
         return res.status(404).json({ error: 'No hay ningún bingo activo configurado.' });
@@ -78,8 +91,14 @@ async function startServer() {
     }
   });
 
-  app.get('/api/bingos', (req, res) => {
+  app.get('/api/bingos', async (req, res) => {
     try {
+      try {
+        const bingos = await nestBackend.getAllBingos();
+        return res.json(bingos);
+      } catch {
+        // Nest backend not available, fall through to local mock.
+      }
       const bingos = dbService.getAllBingos();
       res.json(bingos);
     } catch (e: any) {
@@ -87,8 +106,17 @@ async function startServer() {
     }
   });
 
-  app.post('/api/bingos', (req, res) => {
+  app.post('/api/bingos', async (req, res) => {
     try {
+      try {
+        const bingo = await nestBackend.createBingo(req.body);
+        return res.status(201).json(bingo);
+      } catch (err: any) {
+        if (!err.isNestUnavailable) {
+          return res.status(err.status || 400).json({ error: err.message });
+        }
+        // Nest backend not available, fall through to local mock.
+      }
       const bingo = dbService.createBingo(req.body);
       res.status(201).json(bingo);
     } catch (e: any) {
@@ -96,8 +124,17 @@ async function startServer() {
     }
   });
 
-  app.put('/api/bingos/:id', (req, res) => {
+  app.put('/api/bingos/:id', async (req, res) => {
     try {
+      try {
+        const updated = await nestBackend.updateBingo(req.params.id, req.body);
+        return res.json(updated);
+      } catch (err: any) {
+        if (!err.isNestUnavailable) {
+          return res.status(err.status || 400).json({ error: err.message });
+        }
+        // Nest backend not available, fall through to local mock.
+      }
       const updated = dbService.updateBingo(req.params.id, req.body);
       if (!updated) {
         return res.status(404).json({ error: 'Bingo no encontrado' });
@@ -108,8 +145,17 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/bingos/:id', (req, res) => {
+  app.delete('/api/bingos/:id', async (req, res) => {
     try {
+      try {
+        await nestBackend.deleteBingo(req.params.id);
+        return res.json({ success: true });
+      } catch (err: any) {
+        if (!err.isNestUnavailable) {
+          return res.status(err.status || 400).json({ error: err.message });
+        }
+        // Nest backend not available, fall through to local mock.
+      }
       const deleted = dbService.deleteBingo(req.params.id);
       res.json({ success: deleted });
     } catch (e: any) {
@@ -118,15 +164,22 @@ async function startServer() {
   });
 
   // 2. Cards
-  app.get('/api/bingos/:id/cards', (req, res) => {
+  app.get('/api/bingos/:id/cards', async (req, res) => {
     try {
       const { status, query, page, limit } = req.query;
-      const result = dbService.getCards(req.params.id, {
+      const opts = {
         status: status as string,
         query: query as string,
         page: page ? parseInt(page as string, 10) : undefined,
         limit: limit ? parseInt(limit as string, 10) : undefined,
-      });
+      };
+      try {
+        const result = await nestBackend.getCards(req.params.id, opts);
+        return res.json(result);
+      } catch {
+        // Nest backend not available, fall through to local mock.
+      }
+      const result = dbService.getCards(req.params.id, opts);
       res.json(result);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -161,11 +214,20 @@ async function startServer() {
     }
   });
 
-  app.post('/api/bingos/:id/cards/batch', (req, res) => {
+  app.post('/api/bingos/:id/cards/batch', async (req, res) => {
     try {
       const { cards } = req.body;
       if (!Array.isArray(cards) || cards.length === 0) {
         return res.status(400).json({ error: 'Se requiere una lista no vacía de cartones.' });
+      }
+      try {
+        const result = await nestBackend.importCardsCsv(req.params.id, cards);
+        return res.json(result);
+      } catch (err: any) {
+        if (!err.isNestUnavailable) {
+          return res.status(err.status || 400).json({ error: err.message });
+        }
+        // Nest backend not available, fall through to local mock.
       }
       const result = dbService.importCardsBatch(req.params.id, cards);
       res.json(result);

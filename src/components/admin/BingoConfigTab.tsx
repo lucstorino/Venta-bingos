@@ -123,10 +123,10 @@ export const BingoConfigTab: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isCreatingNew) {
-      const created = createBingo(formData);
+      const created = await createBingo(formData);
       setIsCreatingNew(false);
       setSelectedBingoId(created.id);
       setSavedSuccess('¡Nuevo bingo creado y publicado exitosamente!');

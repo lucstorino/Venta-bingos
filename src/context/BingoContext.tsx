@@ -40,7 +40,7 @@ interface BingoContextType {
   bingos: Bingo[];
   activeBingoId: string;
   setActiveBingoId: (id: string) => void;
-  createBingo: (newBingo: Partial<Bingo>) => Bingo;
+  createBingo: (newBingo: Partial<Bingo>) => Promise<Bingo>;
   updateBingo: (updated: Partial<Bingo>, id?: string) => void;
   deleteBingo: (id: string) => void;
   stopBingoSales: (bingoId?: string) => StopSalesResult;
@@ -633,10 +633,10 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [cards, bingo]
   );
 
-  const createBingo = useCallback((newBingoData: Partial<Bingo>): Bingo => {
-    const newId = newBingoData.id || `bingo-${Date.now()}`;
+  const createBingo = useCallback(async (newBingoData: Partial<Bingo>): Promise<Bingo> => {
+    const tempId = newBingoData.id || `bingo-${Date.now()}`;
     const created: Bingo = {
-      id: newId,
+      id: tempId,
       name: newBingoData.name || 'Nuevo Bingo',
       description: newBingoData.description || 'Sorteo oficial con premios en efectivo y vehículos.',
       drawDate: newBingoData.drawDate || new Date(Date.now() + 86400000 * 15).toISOString().split('T')[0],
@@ -658,24 +658,40 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setBingos((prev) => [created, ...prev]);
     setActiveBingoId(created.id);
 
-    fetch('/api/bingos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: created.id,
-        name: created.name,
-        description: created.description,
-        date: created.drawDate,
-        time: created.drawTime,
-        cardPrice: created.price,
-        currency: created.currency,
-        status: created.status,
-        maxReservationMinutes: created.reservationDurationMinutes,
-        terms: created.termsAndConditions,
-        imageUrl: created.imageUrl,
-        prizesImageUrl: created.prizesImageUrl,
-      }),
-    }).catch(() => {});
+    try {
+      const res = await fetch('/api/bingos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: created.id,
+          name: created.name,
+          description: created.description,
+          date: created.drawDate,
+          time: created.drawTime,
+          cardPrice: created.price,
+          currency: created.currency,
+          status: created.status,
+          maxReservationMinutes: created.reservationDurationMinutes,
+          terms: created.termsAndConditions,
+          imageUrl: created.imageUrl,
+          prizesImageUrl: created.prizesImageUrl,
+        }),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        // The real backend (bingos_back_js) assigns its own ID (cuid) when creating in
+        // Postgres, different from the temporary one generated here. Swap it in local
+        // state so future edits/deletes target the right record.
+        if (saved?.id && saved.id !== tempId) {
+          const realId: string = saved.id;
+          created.id = realId;
+          setBingos((prev) => prev.map((b) => (b.id === tempId ? { ...b, id: realId } : b)));
+          setActiveBingoId((prev) => (prev === tempId ? realId : prev));
+        }
+      }
+    } catch {
+      // Backend unreachable: keep the optimistic local bingo as-is.
+    }
 
     return created;
   }, []);
@@ -918,7 +934,7 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return Array.from(existingMap.values()).sort((a, b) => a.cardNumber - b.cardNumber);
     });
 
-    // Send batch to backend SQLite
+    // Send batch to the backend (real Nest API when reachable, otherwise local SQLite mock).
     fetch(`/api/bingos/${bingo.id}/cards/batch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -928,10 +944,12 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           numbers: c.numbers,
         })),
       }),
-    }).catch(() => {});
+    })
+      .then(() => refreshFromBackend())
+      .catch(() => {});
 
     return { added: newCards.length };
-  }, [bingo.id]);
+  }, [bingo.id, refreshFromBackend]);
 
   const generateSampleCardsBatch = useCallback(
     (count: number, startNumber?: number): number => {
