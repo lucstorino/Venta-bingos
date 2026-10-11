@@ -22,11 +22,20 @@ import {
   Layers,
   Search,
   Ban,
+  Maximize2,
+  Eye,
+  Loader2,
+  X,
+  Upload,
 } from 'lucide-react';
 import { BingoCard } from '../../types';
 import { BingoCard as BingoCardComponent } from '../sales/BingoCard';
 import { AvailableBingoItem } from '../../data/featuredBingos';
-import { LuckyNumberSelector } from './LuckyNumberSelector';
+import { LuckyNumberSelector, LuckyMatchMode } from './LuckyNumberSelector';
+import { useAdminAuth } from '../../context/AdminAuthContext';
+import { useBingo } from '../../context/BingoContext';
+import { uploadBingoImage } from '../../services/firebaseBingoStorageService';
+import { LuckyFloatMessage } from '../common/LuckyFloatMessage';
 
 interface CardSelectionViewProps {
   bingo: AvailableBingoItem;
@@ -46,8 +55,9 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
     return cards.filter((card) => card.status === 'AVAILABLE');
   }, [cards]);
 
-  // Selected lucky number (from 01 to 90)
-  const [luckyNumber, setLuckyNumber] = useState<number | null>(null);
+  // Selected lucky numbers (up to 3 balls, from 01 to 90)
+  const [luckyNumbers, setLuckyNumbers] = useState<number[]>([]);
+  const [luckyMatchMode, setLuckyMatchMode] = useState<LuckyMatchMode>('all');
 
   // Multi-card selection state: user can select multiple cards!
   const [selectedCards, setSelectedCards] = useState<BingoCard[]>([]);
@@ -62,26 +72,66 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
   const [showAllCards, setShowAllCards] = useState(false);
   const [showOfficialPreview, setShowOfficialPreview] = useState(false);
 
-  // Custom Portada uploaded by user
-  const [customPortada, setCustomPortada] = useState<string | null>(null);
+  // Authentication & Dynamic Bingo context
+  const { isAuthenticated } = useAdminAuth();
+  const { bingos, updateBingo } = useBingo();
+  const currentBingoData = useMemo(() => {
+    return bingos.find((b) => b.id === bingo.id);
+  }, [bingos, bingo.id]);
 
-  // Load custom portada from localStorage if exists
+  // Custom Portada & Premios state
+  const [customPortada, setCustomPortada] = useState<string | null>(null);
+  const [customPremiosImage, setCustomPremiosImage] = useState<string | null>(null);
+  const [isUploadingPortada, setIsUploadingPortada] = useState(false);
+  const [isUploadingPremios, setIsUploadingPremios] = useState(false);
+  const [showPrizeZoomModal, setShowPrizeZoomModal] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+
+  // Load custom portada and prizes from localStorage / context
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(`bingo_portada_${bingo.id}`);
-      if (saved) {
-        setCustomPortada(saved);
+      const savedPortada = localStorage.getItem(`bingo_portada_${bingo.id}`);
+      if (savedPortada) {
+        setCustomPortada(savedPortada);
       } else {
         setCustomPortada(null);
+      }
+
+      const savedPremios = localStorage.getItem(`tubingo_prizes_img_${bingo.id}`);
+      if (savedPremios) {
+        setCustomPremiosImage(savedPremios);
+      } else if (currentBingoData?.prizesImageUrl) {
+        setCustomPremiosImage(currentBingoData.prizesImageUrl);
+      } else {
+        setCustomPremiosImage(null);
       }
     } catch {
       // ignore
     }
-  }, [bingo.id]);
+  }, [bingo.id, currentBingoData?.prizesImageUrl]);
 
-  const handleUploadPortada = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadPortada = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) return;
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    setIsUploadingPortada(true);
+    try {
+      const { url } = await uploadBingoImage(bingo.id, 'cover', file);
+      setCustomPortada(url);
+      if (currentBingoData) {
+        updateBingo({
+          ...currentBingoData,
+          imageUrl: url,
+        });
+      }
+      try {
+        localStorage.setItem(`bingo_portada_${bingo.id}`, url);
+      } catch {}
+      setFeedbackNotice('¡Portada oficial guardada exitosamente!');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+    } catch {
+      // Local preview fallback
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
@@ -89,12 +139,52 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
           setCustomPortada(dataUrl);
           try {
             localStorage.setItem(`bingo_portada_${bingo.id}`, dataUrl);
-          } catch {
-            // storage may be full
-          }
+          } catch {}
         }
       };
       reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingPortada(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleUploadPremiosImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPremios(true);
+    try {
+      const { url } = await uploadBingoImage(bingo.id, 'prizes', file);
+      setCustomPremiosImage(url);
+      if (currentBingoData) {
+        updateBingo({
+          ...currentBingoData,
+          prizesImageUrl: url,
+        });
+      }
+      try {
+        localStorage.setItem(`tubingo_prizes_img_${bingo.id}`, url);
+      } catch {}
+      setFeedbackNotice('¡Foto de premios oficial guardada exitosamente!');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+    } catch {
+      // Local preview fallback
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setCustomPremiosImage(dataUrl);
+          try {
+            localStorage.setItem(`tubingo_prizes_img_${bingo.id}`, dataUrl);
+          } catch {}
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingPremios(false);
+      e.target.value = '';
     }
   };
 
@@ -107,8 +197,18 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
     }
   };
 
-  // Active cover image
-  const activePortadaImage = customPortada || bingo.image;
+  // Active cover image (Custom > Context > Initial)
+  const activePortadaImage =
+    customPortada ||
+    currentBingoData?.imageUrl ||
+    bingo.image;
+
+  // Active prizes photo (Custom > Context > Initial > SVG Example)
+  const activePremiosImage =
+    customPremiosImage ||
+    currentBingoData?.prizesImageUrl ||
+    bingo.prizesImage ||
+    '/premios_oficiales_ejemplo.svg';
 
   // Contextual prize list based on selected bingo
   const prizesList = useMemo(() => {
@@ -199,11 +299,17 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
     ];
   }, [bingo.title, bingo.tag]);
 
-  // Filter available cards that contain the chosen lucky number
+  // Filter available cards that contain the chosen lucky numbers (up to 3)
   const matchingCards = useMemo(() => {
-    if (luckyNumber === null) return [];
-    return availableCards.filter((card) => card.numbers.includes(luckyNumber));
-  }, [availableCards, luckyNumber]);
+    if (luckyNumbers.length === 0) return [];
+    return availableCards.filter((card) => {
+      if (luckyMatchMode === 'all') {
+        return luckyNumbers.every((n) => card.numbers.includes(n));
+      } else {
+        return luckyNumbers.some((n) => card.numbers.includes(n));
+      }
+    });
+  }, [availableCards, luckyNumbers, luckyMatchMode]);
 
   // Toggle card in or out of selectedCards
   const toggleCardSelection = (card: BingoCard) => {
@@ -249,22 +355,24 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
     setSelectedCards((prev) => [...prev, ...newCards]);
   };
 
-  const handleSelectLuckyNumber = (num: number) => {
-    if (luckyNumber === num) {
-      setLuckyNumber(null);
-      return;
-    }
-    setLuckyNumber(num);
-    const matches = availableCards.filter((c) => c.numbers.includes(num));
-    if (matches.length > 0) {
-      // Automatically add the first matching card if not already selected
-      setSelectedCards((prev) => {
-        if (!prev.some((c) => c.id === matches[0].id)) {
-          return [...prev, matches[0]];
-        }
+  const handleToggleLuckyNumber = (num: number) => {
+    setLuckyNumbers((prev) => {
+      if (prev.includes(num)) {
+        return prev.filter((n) => n !== num);
+      }
+      if (prev.length >= 3) {
         return prev;
-      });
-    }
+      }
+      return [...prev, num];
+    });
+  };
+
+  const handleSelectMultipleLuckyNumbers = (nums: number[]) => {
+    setLuckyNumbers(nums.slice(0, 3));
+  };
+
+  const handleClearLuckyNumbers = () => {
+    setLuckyNumbers([]);
   };
 
   const formatCardNum = (num: number) => {
@@ -283,7 +391,10 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
   const totalSelectedPrice = selectedCards.length * bingo.price;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-6 sm:py-10 pb-28">
+    <div className="min-h-screen bg-slate-50 py-6 sm:py-10 pb-28 relative">
+      {/* Floating Lucky Welcome Message */}
+      <LuckyFloatMessage />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Back Button matching mockup 3 */}
         <button
@@ -357,7 +468,7 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
                   )}
                 </div>
 
-                {/* Bottom title & upload toolbar */}
+                {/* Bottom title & admin-only upload toolbar */}
                 <div className="absolute bottom-3 left-3 right-3 space-y-2">
                   <div className="text-white text-left px-1">
                     <span className="text-[11px] font-mono uppercase text-amber-300 font-bold block">
@@ -368,82 +479,157 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
                     </h3>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-800 text-xs font-bold shadow-md cursor-pointer border border-slate-200 transition-all active:scale-95">
-                      <Camera className="w-3.5 h-3.5 text-blue-600" />
-                      <span>{customPortada ? 'Cambiar foto' : 'Cargar foto'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleUploadPortada}
-                      />
-                    </label>
+                  {/* ONLY show upload button if admin is logged in (isAuthenticated) */}
+                  {isAuthenticated && (
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <label className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-800 text-xs font-bold shadow-md cursor-pointer border border-slate-200 transition-all active:scale-95">
+                        {isUploadingPortada ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                        ) : (
+                          <Camera className="w-3.5 h-3.5 text-blue-600" />
+                        )}
+                        <span>
+                          {isUploadingPortada
+                            ? 'Guardando...'
+                            : customPortada
+                            ? 'Cambiar portada (Admin)'
+                            : 'Cargar portada (Admin)'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingPortada}
+                          className="hidden"
+                          onChange={handleUploadPortada}
+                        />
+                      </label>
 
-                    {customPortada && (
-                      <button
-                        type="button"
-                        onClick={handleResetPortada}
-                        className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-medium shadow-md transition-all cursor-pointer"
-                        title="Restablecer portada original"
-                      >
-                        <RotateCcw className="w-3 h-3 text-amber-400" />
-                        <span>Restablecer</span>
-                      </button>
-                    )}
-                  </div>
+                      {customPortada && (
+                        <button
+                          type="button"
+                          onClick={handleResetPortada}
+                          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-medium shadow-md transition-all cursor-pointer"
+                          title="Restablecer portada original"
+                        >
+                          <RotateCcw className="w-3 h-3 text-amber-400" />
+                          <span>Restablecer</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Prize Details Column */}
-              <div className="md:col-span-6 p-5 sm:p-6 flex flex-col justify-between bg-gradient-to-br from-white via-sky-50/40 to-amber-50/25">
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black uppercase tracking-wider">
-                      Premios en Juego
-                    </span>
-                    <span className="text-xs font-bold text-slate-500 flex items-center space-x-1">
-                      <Clock className="w-3.5 h-3.5 text-sky-600" />
-                      <span>En Vivo</span>
-                    </span>
+              {/* Prize Photo & Details Column */}
+              <div className="md:col-span-6 p-4 sm:p-5 flex flex-col justify-between bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white relative">
+                <div className="space-y-3">
+                  {/* Top Header of Prizes section */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center space-x-1.5 shadow-xs">
+                        <Trophy className="w-3.5 h-3.5 text-slate-950" />
+                        <span>Premios en Juego</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-1.5">
+                      {activePremiosImage && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPrizeZoomModal(true)}
+                          className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer border border-white/15"
+                          title="Ampliar afiche de premios a pantalla completa"
+                        >
+                          <Maximize2 className="w-3 h-3 text-amber-300" />
+                          <span className="hidden sm:inline">Ampliar</span>
+                        </button>
+                      )}
+
+                      {/* ONLY FOR ADMIN: Upload prizes photo */}
+                      {isAuthenticated && (
+                        <label className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-xs">
+                          {isUploadingPremios ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Camera className="w-3.5 h-3.5 text-amber-300" />
+                          )}
+                          <span>
+                            {isUploadingPremios
+                              ? 'Guardando...'
+                              : activePremiosImage
+                              ? 'Cambiar foto premios'
+                              : 'Cargar foto premios'}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={isUploadingPremios}
+                            className="hidden"
+                            onChange={handleUploadPremiosImage}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2.5">
-                    {prizesList.map((p, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-start space-x-3 p-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs"
-                      >
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${p.bgClass}`}>
-                          {p.icon}
+                  {feedbackNotice && (
+                    <div className="p-2 rounded-lg bg-emerald-600/90 text-white text-xs font-bold text-center animate-fadeIn">
+                      {feedbackNotice}
+                    </div>
+                  )}
+
+                  {/* Superimposed Photo of Prizes (Sobre puesta sobre la portada de premios) */}
+                  <div
+                    className="relative rounded-2xl overflow-hidden border border-white/15 bg-slate-900 shadow-md group/photo min-h-[220px] sm:min-h-[250px] flex items-center justify-center cursor-pointer"
+                    onClick={() => setShowPrizeZoomModal(true)}
+                  >
+                    {activePremiosImage ? (
+                      <>
+                        <img
+                          src={activePremiosImage}
+                          alt={`Afiche de Premios - ${bingo.title}`}
+                          className="w-full max-h-[270px] sm:max-h-[300px] object-contain transition-transform duration-500 group-hover/photo:scale-[1.02]"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-end justify-center pb-3">
+                          <span className="bg-slate-900/90 text-amber-300 px-3 py-1 rounded-full text-xs font-black shadow-lg border border-amber-400/40 flex items-center space-x-1.5">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Hacé clic para ver afiche completo en HD</span>
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                              {p.category}
-                            </span>
-                            <span className="text-[11px] font-black text-blue-700 font-mono">
-                              {p.badge}
-                            </span>
-                          </div>
-                          <div className="text-sm font-black text-slate-900 truncate">
-                            {p.prizeName}
-                          </div>
-                          <div className="text-[11px] text-slate-500 leading-tight">
-                            {p.detail}
-                          </div>
-                        </div>
+                      </>
+                    ) : (
+                      <div className="p-6 text-center text-slate-400 space-y-2">
+                        <Trophy className="w-10 h-10 text-amber-400/60 mx-auto" />
+                        <p className="text-xs font-semibold">
+                          Afiche oficial de premios pendiente de carga
+                        </p>
+                        {isAuthenticated && (
+                          <label className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Subir foto de premios (Admin)</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleUploadPremiosImage}
+                            />
+                          </label>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
-                <div className="pt-3.5 mt-2 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
+                {/* Footer of Prizes Card */}
+                <div className="pt-3 mt-2 border-t border-white/10 flex items-center justify-between text-xs text-slate-300">
                   <div className="flex items-center space-x-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span className="font-semibold text-slate-700">Sorteo con escribano público</span>
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span className="font-semibold">Sorteo oficial con escribano</span>
                   </div>
-                  <span className="font-black text-blue-700">{bingo.formattedPrice} c/u</span>
+                  <span className="font-black text-amber-300 text-sm">
+                    {bingo.formattedPrice} c/u
+                  </span>
                 </div>
               </div>
             </div>
@@ -502,32 +688,47 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
           {/* SECTION: Lucky Number Picker */}
           <LuckyNumberSelector
             availableCards={availableCards}
-            selectedLuckyNumber={luckyNumber}
-            onSelectNumber={handleSelectLuckyNumber}
-            onClearSelection={() => {
-              setLuckyNumber(null);
-            }}
+            selectedLuckyNumbers={luckyNumbers}
+            onToggleNumber={handleToggleLuckyNumber}
+            onSelectMultipleNumbers={handleSelectMultipleLuckyNumbers}
+            onClearSelection={handleClearLuckyNumbers}
+            matchMode={luckyMatchMode}
+            onChangeMatchMode={setLuckyMatchMode}
           />
 
-          {/* SECTION: Matching Cards for Lucky Number */}
-          {luckyNumber !== null && (
+          {/* SECTION: Matching Cards for Lucky Numbers */}
+          {luckyNumbers.length > 0 && (
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
                   <h3 className="text-sm font-bold text-slate-900">
-                    Cartones disponibles con la bolilla #{String(luckyNumber).padStart(2, '0')}:
+                    {luckyNumbers.length === 1 && (
+                      <>Cartones disponibles con la bolilla #{String(luckyNumbers[0]).padStart(2, '0')}:</>
+                    )}
+                    {luckyNumbers.length === 2 && (
+                      <>
+                        Cartones disponibles con las bolillas #{String(luckyNumbers[0]).padStart(2, '0')} y #{String(luckyNumbers[1]).padStart(2, '0')}
+                        {luckyMatchMode === 'all' ? ' (ambas a la vez):' : ' (al menos una):'}
+                      </>
+                    )}
+                    {luckyNumbers.length === 3 && (
+                      <>
+                        Cartones con las 3 bolillas #{String(luckyNumbers[0]).padStart(2, '0')}, #{String(luckyNumbers[1]).padStart(2, '0')} y #{String(luckyNumbers[2]).padStart(2, '0')}
+                        {luckyMatchMode === 'all' ? ' (las 3 juntas):' : ' (al menos una):'}
+                      </>
+                    )}
                   </h3>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-blue-700">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full shadow-2xs">
                     {matchingCards.length} {matchingCards.length === 1 ? 'cartón encontrado' : 'cartones encontrados'}
                   </span>
                   {matchingCards.length > 1 && (
                     <button
                       type="button"
                       onClick={handleSelectAllMatching}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer ml-2"
+                      className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer ml-2"
                     >
                       Seleccionar todos
                     </button>
@@ -536,12 +737,27 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
               </div>
 
               {matchingCards.length === 0 ? (
-                <div className="p-6 text-center bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs sm:text-sm">
+                <div className="p-6 text-center bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs sm:text-sm space-y-2">
                   <p className="font-bold">
-                    No hay cartones disponibles actualmente con el número #{String(luckyNumber).padStart(2, '0')}.
+                    No hay cartones disponibles actualmente que contengan{' '}
+                    {luckyNumbers.length === 1
+                      ? `la bolilla #${String(luckyNumbers[0]).padStart(2, '0')}`
+                      : `las ${luckyNumbers.length} bolillas elegidas simultáneamente (${luckyNumbers.map((n) => '#' + String(n).padStart(2, '0')).join(', ')})`}
+                    .
                   </p>
-                  <p className="text-amber-700 mt-1">
-                    Probá con otro número o elegí cartones al azar con los botones superiores.
+                  {luckyNumbers.length > 1 && luckyMatchMode === 'all' && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setLuckyMatchMode('any')}
+                        className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        Ver cartones que tengan al menos 1 de estas bolillas
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-amber-700 text-[11px]">
+                    Probá cambiando o quitando una bolilla, o elegí cartones al azar con los botones superiores.
                   </p>
                 </div>
               ) : (
@@ -556,7 +772,7 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
                           p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left relative select-none
                           ${
                             isCardSelected
-                              ? 'bg-sky-50/90 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                              ? 'bg-emerald-50/90 border-emerald-600 shadow-md ring-2 ring-emerald-500/20'
                               : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300'
                           }
                         `}
@@ -566,12 +782,12 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
                             Cartón N° {formatCardNum(card.cardNumber)}
                           </span>
                           {isCardSelected ? (
-                            <span className="bg-blue-600 text-white rounded-full p-1 text-xs font-bold flex items-center space-x-1">
+                            <span className="bg-emerald-600 text-white rounded-full p-1 text-xs font-bold flex items-center space-x-1">
                               <CheckCircle className="w-3.5 h-3.5" />
                               <span className="text-[10px]">Seleccionado</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-full hover:bg-blue-100 hover:text-blue-700">
+                            <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-full hover:bg-emerald-100 hover:text-emerald-700">
                               + Seleccionar
                             </span>
                           )}
@@ -579,18 +795,21 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
 
                         {/* 10 numbers mini-grid */}
                         <div className="grid grid-cols-5 gap-1 text-[11px] font-mono font-bold text-center">
-                          {card.numbers.map((n, i) => (
-                            <span
-                              key={i}
-                              className={`py-0.5 rounded ${
-                                n === luckyNumber
-                                  ? 'bg-amber-400 text-slate-950 font-black ring-1 ring-amber-500'
-                                  : 'bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              {String(n).padStart(2, '0')}
-                            </span>
-                          ))}
+                          {card.numbers.map((n, i) => {
+                            const isLucky = luckyNumbers.includes(n);
+                            return (
+                              <span
+                                key={i}
+                                className={`py-0.5 rounded ${
+                                  isLucky
+                                    ? 'bg-amber-400 text-slate-950 font-black ring-1 ring-amber-500 shadow-2xs scale-105'
+                                    : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {String(n).padStart(2, '0')}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -771,13 +990,13 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
           )}
 
           {/* Initial state guide if nothing is selected yet */}
-          {selectedCards.length === 0 && luckyNumber === null && (
+          {selectedCards.length === 0 && luckyNumbers.length === 0 && (
             <div className="p-6 text-center bg-slate-50/80 rounded-2xl border border-slate-200/60 text-slate-500 text-xs">
               <p className="font-bold text-slate-700 mb-1">
                 ¿Cómo funciona la compra de cartones?
               </p>
               <p>
-                1. Hacé clic en cualquier bolilla del <strong className="text-slate-800">01 al 90</strong> para ver los cartones con ese número, o
+                1. Hacé clic en <strong className="text-slate-800">1 o hasta 3 bolillas de la suerte</strong> del 01 al 90 para filtrar los cartones con tus números favoritos, o
               </p>
               <p>
                 2. Utilizá los botones <strong className="text-amber-700">"+1 al azar"</strong>, <strong className="text-amber-700">"+3 al azar"</strong> o <strong className="text-amber-700">"+5 al azar"</strong> para seleccionar múltiples cartones en un solo clic.
@@ -825,6 +1044,44 @@ export const CardSelectionView: React.FC<CardSelectionViewProps> = ({
                   Agregar {selectedCards.length} {selectedCards.length === 1 ? 'cartón' : 'cartones'} al carrito
                 </span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / Zoom Modal for Official Prizes Photo */}
+      {showPrizeZoomModal && activePremiosImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/90 backdrop-blur-md animate-fadeIn"
+          onClick={() => setShowPrizeZoomModal(false)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[92vh] bg-slate-900 rounded-3xl p-3 sm:p-4 border border-amber-400/40 shadow-2xl flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-2 text-white border-b border-white/10 mb-2">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span className="text-xs sm:text-sm font-bold text-amber-300">
+                  Afiche Oficial de Premios • {bingo.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPrizeZoomModal(false)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Cerrar vista ampliada"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-auto max-h-[78vh] w-full rounded-2xl flex items-center justify-center bg-black/60 p-2">
+              <img
+                src={activePremiosImage}
+                alt={`Afiche Oficial - ${bingo.title}`}
+                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-2xl"
+                referrerPolicy="no-referrer"
+              />
             </div>
           </div>
         </div>

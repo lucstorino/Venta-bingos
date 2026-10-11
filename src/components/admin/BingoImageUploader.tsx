@@ -59,19 +59,18 @@ export const BingoImageUploader: React.FC<BingoImageUploaderProps> = ({
     }
 
     setIsUploading(true);
-    setUploadProgress('Subiendo a Firebase Storage...');
+    setUploadProgress('Guardando imagen...');
 
     try {
-      // Sube a Firebase Storage en la ruta: bingos/{bingoId}/{imageType}.{ext}
-      // y registra la referencia permanente en Firestore
+      // Sube de forma segura y permanente (servidor + Firestore)
       const { url } = await uploadBingoImage(bingoId, imageType, file);
       
       onImageChange(url);
-      setSuccessNotice(`Imagen guardada permanentemente en Firebase Storage.`);
+      setSuccessNotice(`¡Imagen guardada exitosamente!`);
       setTimeout(() => setSuccessNotice(null), 4000);
     } catch (err: any) {
-      console.error('Error subiendo imagen a Firebase Storage:', err);
-      setErrorNotice(err.message || 'Error al conectar con Firebase Storage. Verifica tu conexión.');
+      console.error('Error subiendo imagen:', err);
+      setErrorNotice(err.message || 'Error al procesar la imagen.');
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -87,15 +86,15 @@ export const BingoImageUploader: React.FC<BingoImageUploaderProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!confirm('¿Deseas quitar esta imagen permanentemente de Firebase Storage?')) return;
+    if (!confirm('¿Deseas quitar esta imagen del bingo?')) return;
     
     setIsUploading(true);
     try {
       if (bingoId) {
-        await deleteBingoImage(bingoId, imageType);
+        await deleteBingoImage(bingoId, imageType, currentImageUrl);
       }
       onImageChange('');
-      setSuccessNotice('Imagen eliminada de Firebase Storage.');
+      setSuccessNotice('Imagen eliminada.');
       setTimeout(() => setSuccessNotice(null), 3000);
     } catch (err: any) {
       setErrorNotice('Error al eliminar imagen: ' + err.message);
@@ -126,7 +125,7 @@ export const BingoImageUploader: React.FC<BingoImageUploaderProps> = ({
           {currentImageUrl && (
             <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
               <CloudCheck className="w-3 h-3 text-emerald-400" />
-              <span>Permanente en Firebase</span>
+              <span>Imagen activa</span>
             </span>
           )}
         </div>

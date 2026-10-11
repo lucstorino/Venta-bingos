@@ -17,6 +17,10 @@ export interface DBBingo {
   liveStreamUrl: string;
   terms: string;
   imageUrl?: string;
+  prizesImageUrl?: string;
+  ticketTemplateImage?: string;
+  extractoImageUrl?: string;
+  bannerImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,15 +165,27 @@ export function initDatabase() {
     );
   `);
 
-  // Migration: Add image_url column to bingos if it doesn't exist
+  // Migration: Add image columns to bingos if they don't exist
   try {
     const tableInfo = db.prepare(`PRAGMA table_info(bingos)`).all() as any[];
-    const hasImageCol = tableInfo.some((col) => col.name === 'image_url');
-    if (!hasImageCol) {
+    const colNames = tableInfo.map((col) => col.name);
+    if (!colNames.includes('image_url')) {
       db.exec(`ALTER TABLE bingos ADD COLUMN image_url TEXT`);
     }
+    if (!colNames.includes('prizes_image_url')) {
+      db.exec(`ALTER TABLE bingos ADD COLUMN prizes_image_url TEXT`);
+    }
+    if (!colNames.includes('ticket_template_image')) {
+      db.exec(`ALTER TABLE bingos ADD COLUMN ticket_template_image TEXT`);
+    }
+    if (!colNames.includes('extracto_image_url')) {
+      db.exec(`ALTER TABLE bingos ADD COLUMN extracto_image_url TEXT`);
+    }
+    if (!colNames.includes('banner_image_url')) {
+      db.exec(`ALTER TABLE bingos ADD COLUMN banner_image_url TEXT`);
+    }
   } catch (err) {
-    console.warn('Migration note for image_url:', err);
+    console.warn('Migration note for image columns:', err);
   }
 
   // Check if seed data is needed
@@ -312,6 +328,10 @@ export const dbService = {
       liveStreamUrl: row.live_stream_url,
       terms: row.terms,
       imageUrl: row.image_url || undefined,
+      prizesImageUrl: row.prizes_image_url || undefined,
+      ticketTemplateImage: row.ticket_template_image || undefined,
+      extractoImageUrl: row.extracto_image_url || undefined,
+      bannerImageUrl: row.banner_image_url || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -332,6 +352,10 @@ export const dbService = {
       liveStreamUrl: row.live_stream_url,
       terms: row.terms,
       imageUrl: row.image_url || undefined,
+      prizesImageUrl: row.prizes_image_url || undefined,
+      ticketTemplateImage: row.ticket_template_image || undefined,
+      extractoImageUrl: row.extracto_image_url || undefined,
+      bannerImageUrl: row.banner_image_url || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
@@ -342,8 +366,10 @@ export const dbService = {
     db.prepare(`
       INSERT INTO bingos (
         id, name, description, date, time, card_price, currency, status,
-        max_reservation_minutes, live_stream_url, terms, image_url, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        max_reservation_minutes, live_stream_url, terms, image_url,
+        prizes_image_url, ticket_template_image, extracto_image_url, banner_image_url,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       bingo.id,
       bingo.name,
@@ -357,6 +383,10 @@ export const dbService = {
       bingo.liveStreamUrl || '',
       bingo.terms || '',
       bingo.imageUrl || '',
+      bingo.prizesImageUrl || '',
+      bingo.ticketTemplateImage || '',
+      bingo.extractoImageUrl || '',
+      bingo.bannerImageUrl || '',
       now,
       now
     );
@@ -377,7 +407,8 @@ export const dbService = {
       UPDATE bingos SET
         name = ?, description = ?, date = ?, time = ?, card_price = ?,
         currency = ?, status = ?, max_reservation_minutes = ?, live_stream_url = ?,
-        terms = ?, image_url = ?, updated_at = ?
+        terms = ?, image_url = ?, prizes_image_url = ?, ticket_template_image = ?,
+        extracto_image_url = ?, banner_image_url = ?, updated_at = ?
       WHERE id = ?
     `).run(
       updated.name,
@@ -391,6 +422,10 @@ export const dbService = {
       updated.liveStreamUrl,
       updated.terms,
       updated.imageUrl || '',
+      updated.prizesImageUrl || '',
+      updated.ticketTemplateImage || '',
+      updated.extractoImageUrl || '',
+      updated.bannerImageUrl || '',
       updated.updatedAt,
       id
     );

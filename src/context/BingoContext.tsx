@@ -13,6 +13,7 @@ import {
   initialCards,
   initialMercadoPagoConfig,
   initialPrizes,
+  initialOrders,
 } from '../data/mockBingo';
 import { generateSampleCards, generateValidationCode } from '../utils/cardValidator';
 import { addOrUpdatePastBingo } from '../data/pastBingos';
@@ -71,6 +72,8 @@ interface BingoContextType {
   updateCardNumbers: (cardId: string, newNumbers: number[], newCardNumber?: number) => void;
   updateMercadoPagoConfig: (cfg: Partial<MercadoPagoConfig>) => void;
   findOrdersByCustomer: (dniOrPhone: string) => Order[];
+  updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  deleteOrder: (orderId: string) => void;
   getCardById: (cardId: string) => BingoCard | undefined;
   getCardByNumber: (num: number) => BingoCard | undefined;
   resetAllData: () => void;
@@ -158,9 +161,13 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return initialOrders;
     } catch {
-      return [];
+      return initialOrders;
     }
   });
 
@@ -1020,6 +1027,23 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [orders]
   );
 
+  const updateOrderStatus = useCallback((orderId: string, newStatus: Order['status']) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          status: newStatus,
+          paidAt: newStatus === 'PAID' ? (o.paidAt || Date.now()) : o.paidAt,
+        };
+      })
+    );
+  }, []);
+
+  const deleteOrder = useCallback((orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  }, []);
+
   const resetAllData = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.BINGOS);
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_BINGO_ID);
@@ -1073,6 +1097,8 @@ export const BingoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateCardNumbers,
         updateMercadoPagoConfig,
         findOrdersByCustomer,
+        updateOrderStatus,
+        deleteOrder,
         getCardById,
         getCardByNumber,
         resetAllData,

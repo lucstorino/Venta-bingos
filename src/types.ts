@@ -35,6 +35,13 @@ export interface Bingo {
   salesClosedAt?: number;
   extractoImageUrl?: string;
   bannerImageUrl?: string;
+  // 5 Tipos oficiales de imágenes en Firebase
+  tipo1Url?: string; // Tipo 1: Portada Principal del Bingo
+  tipo2Url?: string; // Tipo 2: Gráfica Oficial de Premios
+  tipo3Url?: string; // Tipo 3: Plantilla Oficial del Cartón
+  tipo4Url?: string; // Tipo 4: Extracto Oficial del Sorteo
+  tipo5Url?: string; // Tipo 5: Banner Promocional Secundario
+  firebaseImages?: Record<string, any>;
   imagesMetadata?: Record<string, any>;
 }
 

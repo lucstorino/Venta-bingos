@@ -52,7 +52,7 @@ export const BingoExtractImageUploader: React.FC<BingoExtractImageUploaderProps>
     setIsUploading(true);
 
     try {
-      // Subir físicamente a Firebase Storage en: bingos/{bingo.id}/extract.ext
+      // Subir de forma segura y permanente (servidor + Firestore)
       const { url } = await uploadBingoImage(bingo.id || 'bingo-oficial-2026', 'extract', file);
       
       onImageChange(url);
@@ -70,11 +70,11 @@ export const BingoExtractImageUploader: React.FC<BingoExtractImageUploaderProps>
         location: bingo.location || 'Sede Central Oficial',
       });
 
-      setFeedback('¡Extracto oficial guardado permanentemente en Firebase Storage!');
+      setFeedback('¡Extracto oficial guardado exitosamente!');
       setTimeout(() => setFeedback(null), 4000);
     } catch (err: any) {
-      console.error('Error subiendo extracto a Firebase Storage:', err);
-      setErrorNotice(err.message || 'Error al conectar con Firebase Storage.');
+      console.error('Error subiendo extracto:', err);
+      setErrorNotice(err.message || 'Error al procesar y guardar el extracto.');
     } finally {
       setIsUploading(false);
     }
@@ -188,7 +188,7 @@ export const BingoExtractImageUploader: React.FC<BingoExtractImageUploaderProps>
                 {isUploading && (
                   <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2">
                     <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                    <span className="text-xs font-bold text-white">Guardando en Firebase Storage...</span>
+                    <span className="text-xs font-bold text-white">Guardando extracto...</span>
                   </div>
                 )}
               </div>
@@ -211,7 +211,7 @@ export const BingoExtractImageUploader: React.FC<BingoExtractImageUploaderProps>
               {isUploading ? (
                 <div className="flex flex-col items-center justify-center space-y-2">
                   <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                  <span className="text-xs font-bold text-white">Guardando en Firebase Storage...</span>
+                  <span className="text-xs font-bold text-white">Guardando extracto...</span>
                 </div>
               ) : (
                 <>

@@ -3,7 +3,6 @@ import {
   Upload,
   Image as ImageIcon,
   Trash2,
-  Sparkles,
   Check,
   Loader2,
   CloudCheck,
@@ -17,21 +16,6 @@ interface BingoCoverUploaderProps {
   onImageChange: (url: string) => void;
   bingoId?: string;
 }
-
-const PRESET_COVERS = [
-  {
-    name: 'Casa a estrenar',
-    url: '/src/assets/images/bingo_casa_card_1789819899795.jpg',
-  },
-  {
-    name: 'Auto 0 km',
-    url: '/src/assets/images/bingo_auto_card_1789819914970.jpg',
-  },
-  {
-    name: 'Viaje a Punta Cana',
-    url: '/src/assets/images/bingo_viaje_card_1789819936993.jpg',
-  },
-];
 
 export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
   currentImageUrl,
@@ -60,18 +44,17 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
     }
 
     setIsUploading(true);
-    setUploadProgress('Guardando en Firebase Storage...');
+    setUploadProgress('Guardando imagen...');
 
     try {
-      // Sube a Firebase Storage en bingos/{bingoId}/cover.{ext}
+      // Sube de forma segura y permanente (servidor + Firestore)
       const { url } = await uploadBingoImage(bingoId, 'cover', file);
       onImageChange(url);
-      setSuccessNotice('Portada subida y guardada permanentemente en Firebase Storage.');
+      setSuccessNotice('¡Portada subida y guardada exitosamente!');
       setTimeout(() => setSuccessNotice(null), 4000);
     } catch (err: any) {
-      console.error('Error subiendo portada a Firebase Storage:', err);
-      // Si ocurre un error de permisos o red, mostramos aviso claro
-      setErrorNotice(err.message || 'Error al conectar con Firebase Storage.');
+      console.error('Error subiendo portada:', err);
+      setErrorNotice(err.message || 'Error al procesar y guardar la imagen.');
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -91,7 +74,7 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
     setIsUploading(true);
     try {
       if (bingoId) {
-        await deleteBingoImage(bingoId, 'cover');
+        await deleteBingoImage(bingoId, 'cover', currentImageUrl);
       }
       onImageChange('');
       setSuccessNotice('Imagen de portada quitada.');
@@ -103,7 +86,7 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
     }
   };
 
-  const isFirebaseStored = currentImageUrl && currentImageUrl.includes('firebasestorage.googleapis.com');
+  const hasImage = Boolean(currentImageUrl);
 
   return (
     <div className="space-y-4">
@@ -114,14 +97,14 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
             <span>1. Foto de Portada del Bingo (Cover Image)</span>
           </label>
           <span className="text-[11px] text-slate-400">
-            Recomendado: 16:9 o 16:10 (PNG, JPG o WebP) • Se almacena en Firebase Storage: bingos/{bingoId}/cover.ext
+            Recomendado: 16:9 o 16:10 (PNG, JPG o WebP) • Se almacena de forma permanente y optimizada
           </span>
         </div>
 
-        {isFirebaseStored && (
+        {hasImage && (
           <span className="inline-flex items-center space-x-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
             <CloudCheck className="w-3 h-3 text-emerald-400" />
-            <span>Almacenada en Firebase</span>
+            <span>Imagen activa</span>
           </span>
         )}
       </div>
@@ -146,7 +129,7 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
                   className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg transition-all cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>Cambiar foto en Storage</span>
+                  <span>Cambiar portada</span>
                 </button>
                 <a
                   href={currentImageUrl}
@@ -204,7 +187,7 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
                     Hacé clic o arrastrá la foto de portada aquí
                   </p>
                   <p className="text-xs text-slate-400 max-w-xs">
-                    Se subirá directamente a Firebase Storage bajo este código de bingo.
+                    Subí la imagen principal oficial para este bingo.
                   </p>
                 </>
               )}
@@ -238,8 +221,8 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
           )}
         </div>
 
-        {/* Right: Quick actions & Presets */}
-        <div className="md:col-span-4 space-y-3 flex flex-col justify-between">
+        {/* Right: Quick actions */}
+        <div className="md:col-span-4 space-y-3 flex flex-col justify-start">
           <div className="space-y-3">
             <button
               type="button"
@@ -248,7 +231,7 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
               className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center justify-center space-x-2 border border-slate-700 transition-all cursor-pointer shadow-sm"
             >
               <Upload className="w-4 h-4 text-amber-400" />
-              <span>Subir portada a Firebase Storage</span>
+              <span>Cargar foto de portada</span>
             </button>
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 space-y-1">
               <p className="font-semibold text-slate-300 flex items-center gap-1">
@@ -256,43 +239,8 @@ export const BingoCoverUploader: React.FC<BingoCoverUploaderProps> = ({
                 Almacenamiento Permanente
               </p>
               <p>
-                Las fotos no se guardan como Base64 efímero en el navegador, sino como archivos reales en Firebase Storage.
+                Las imágenes se procesan y almacenan de forma permanente y optimizada para máxima velocidad.
               </p>
-            </div>
-          </div>
-
-          {/* Quick Preset Gallery */}
-          <div className="pt-2 border-t border-slate-800/80">
-            <p className="text-[11px] font-semibold text-slate-400 mb-2 flex items-center space-x-1">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Portadas sugeridas de muestra:</span>
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {PRESET_COVERS.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => onImageChange(preset.url)}
-                  className={`group relative rounded-lg overflow-hidden border transition-all aspect-video cursor-pointer ${
-                    currentImageUrl === preset.url
-                      ? 'border-amber-400 ring-2 ring-amber-400/30'
-                      : 'border-slate-700 hover:border-slate-500'
-                  }`}
-                  title={preset.name}
-                >
-                  <img
-                    src={preset.url}
-                    alt={preset.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    referrerPolicy="no-referrer"
-                  />
-                  {currentImageUrl === preset.url && (
-                    <div className="absolute inset-0 bg-amber-500/30 flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
             </div>
           </div>
         </div>

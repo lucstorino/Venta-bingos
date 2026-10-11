@@ -66,6 +66,107 @@ async function startServer() {
     }
   });
 
+  // Universal Image Uploader for Bingos (Cover, Prizes, Template, Extract, Banner)
+  app.post('/api/images/upload', (req, res) => {
+    try {
+      const { bingoId, imageType, imageBase64, filename } = req.body;
+      if (!imageBase64) {
+        return res.status(400).json({ error: 'imageBase64 es obligatorio para subir una imagen.' });
+      }
+
+      const cleanBingoId = (bingoId || 'default').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const cleanType = (imageType || 'cover').replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      // Determine extension
+      let ext = 'jpg';
+      const mimeMatch = imageBase64.match(/^data:image\/(\w+);base64,/);
+      if (mimeMatch) {
+        ext = mimeMatch[1] === 'jpeg' ? 'jpg' : mimeMatch[1];
+      } else if (filename) {
+        ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
+      }
+
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'bingos');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      const savedFilename = `${cleanBingoId}_${cleanType}_${Date.now()}.${ext}`;
+      const filePath = path.join(uploadsDir, savedFilename);
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `/uploads/bingos/${savedFilename}`;
+
+      // Update SQLite DB if bingo exists with 5 image types
+      const fieldMap: Record<string, string> = {
+        cover: 'imageUrl',
+        prizes: 'prizesImageUrl',
+        template: 'ticketTemplateImage',
+        extract: 'extractoImageUrl',
+        banner: 'bannerImageUrl',
+        tipo1: 'imageUrl',
+        tipo2: 'prizesImageUrl',
+        tipo3: 'ticketTemplateImage',
+        tipo4: 'extractoImageUrl',
+        tipo5: 'bannerImageUrl',
+      };
+
+      const field = fieldMap[imageType || 'cover'] || 'imageUrl';
+      if (bingoId) {
+        dbService.updateBingo(bingoId, { [field]: publicUrl } as any);
+      }
+
+      res.status(200).json({
+        success: true,
+        url: publicUrl,
+        storagePath: `uploads/bingos/${savedFilename}`,
+        imageType: imageType || 'cover',
+        bingoId: bingoId || '',
+      });
+    } catch (e: any) {
+      console.error('Error al guardar imagen en servidor:', e);
+      res.status(500).json({ error: e.message || 'Error interno al procesar imagen.' });
+    }
+  });
+
+  // Universal Image Deletion
+  app.post('/api/images/delete', (req, res) => {
+    try {
+      const { bingoId, imageType, url } = req.body;
+      if (url && typeof url === 'string' && url.startsWith('/uploads/bingos/')) {
+        const localPath = path.join(process.cwd(), 'public', url.replace(/^\//, ''));
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
+      }
+
+      const fieldMap: Record<string, string> = {
+        cover: 'imageUrl',
+        prizes: 'prizesImageUrl',
+        template: 'ticketTemplateImage',
+        extract: 'extractoImageUrl',
+        banner: 'bannerImageUrl',
+        tipo1: 'imageUrl',
+        tipo2: 'prizesImageUrl',
+        tipo3: 'ticketTemplateImage',
+        tipo4: 'extractoImageUrl',
+        tipo5: 'bannerImageUrl',
+      };
+
+      const field = fieldMap[imageType || 'cover'];
+      if (bingoId && field) {
+        dbService.updateBingo(bingoId, { [field]: '' } as any);
+      }
+
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // 1. Bingos
   app.get('/api/bingos/active', async (req, res) => {
     try {
